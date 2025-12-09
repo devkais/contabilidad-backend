@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigModule } from '@nestjs/config';
+import { AppDataSource } from './data-source';
 
 @Module({
   imports: [
@@ -9,13 +10,13 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
       imports: [ConfigModule],
 
       // La función useFactory es donde definimos las opciones de conexión
-      useFactory: (configService: ConfigService) => ({
-        type: 'mariadb', // Driver
-        host: configService.get<string>('DB_HOST'),
-        port: configService.get<number>('DB_PORT'),
-        username: configService.get<string>('DB_USERNAME'),
-        password: configService.get<string>('DB_PASSWORD'),
-        database: configService.get<string>('DB_DATABASE'),
+      useFactory: () => ({
+        type: 'mysql', // Driver
+        host: 'localhost',
+        port: 3307,
+        username: 'miguel',
+        password: 'root',
+        database: 'contabilidad_db',
 
         // Aquí especificamos dónde están todas nuestras Entidades de Contabilidad
         // La ruta 'dist/**/*.entity{.ts,.js}' le dice a Nest/TypeORM
@@ -24,13 +25,24 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
         entities: [__dirname + '/../**/*.entity{.ts,.js}'],
 
         // ¡IMPORTANTE! Solo 'true' en desarrollo. Debería ser 'false' en producción.
-        synchronize: configService.get<string>('DB_SYNCHRONIZE') === 'false',
+        synchronize: true,
 
         // Muestra las consultas SQL en la consola
-        logging: configService.get<string>('DB_LOGGING') === 'true',
+        logging: true,
       }),
-      inject: [ConfigService],
     }),
   ],
+  providers: [
+    {
+      provide: 'DATA_SOURCE',
+      useFactory: async () => {
+        if (!AppDataSource.isInitialized) {
+          await AppDataSource.initialize();
+        }
+        return AppDataSource;
+      },
+    },
+  ],
+  exports: ['DATA_SOURCE'],
 })
 export class DatabaseModule {}
