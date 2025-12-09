@@ -1,25 +1,33 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 import { TipoCambio } from '../tipo-cambio/tipo-cambio.entity';
-import { DetalleAsiento } from '../detalle-asiento/detalle-asiento.entity';
+import { Cuenta } from '../cuenta/cuenta.entity';
 
-@Entity('moneda')
+@Entity('moneda') // Tabla: moneda
 export class Moneda {
   @PrimaryGeneratedColumn()
   id_moneda: number; // PK
 
-  @Column({ length: 5, unique: true })
-  codigo: string; // Ejemplo: USD, BOB, EUR
+  @Column({ length: 10, unique: true })
+  codigo: string; // Ejemplo: BS, USD, UFV
 
   @Column({ length: 100 })
-  nombre: string; // Ejemplo: Dólar Americano, Boliviano
+  nombre: string;
 
-  // RELACIÓN con TipoCambio
-  // Una Moneda tiene muchos Tipos de Cambio registrados
-  @OneToMany(() => TipoCambio, (tipoCambio) => tipoCambio.moneda)
-  tiposCambio: TipoCambio[];
+  @Column({ length: 5 })
+  simbolo: string; // Ejemplo: $ o Bs
 
-  // RELACIÓN con DetalleAsiento
-  // Una Moneda se usa en muchas líneas de Detalle de Asiento
-  @OneToMany(() => DetalleAsiento, (detalle) => detalle.moneda)
-  detallesAsiento: DetalleAsiento[];
+  // --- RELACIONES UNO A MUCHOS (OneToMany) ---
+
+  // 1. Relación con TipoCambio
+  // Una Moneda puede ser destino en muchos Tipos de Cambio registrados
+  @OneToMany(
+    () => TipoCambio,
+    (tipoCambio: TipoCambio) => tipoCambio.monedaDestino,
+  )
+  tiposCambioDestino: TipoCambio[];
+
+  // 2. Relación con Cuenta
+  // Una Moneda es la moneda principal de muchas cuentas
+  @OneToMany(() => Cuenta, (cuenta: Cuenta) => cuenta.moneda)
+  cuentas: Cuenta[];
 }

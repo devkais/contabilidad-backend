@@ -7,37 +7,53 @@ import {
 } from 'typeorm';
 import { Asiento } from '../asiento/asiento.entity';
 import { Cuenta } from '../cuenta/cuenta.entity';
-import { Moneda } from '../moneda/moneda.entity';
+import { CentroCosto } from '../centro-costo/centro-costo.entity';
+import { CuentaAuxiliar } from '../cuenta-auxiliar/cuenta-auxiliar.entity';
 
-@Entity('detalle_asiento')
+@Entity('detalle_asiento') // Tabla: detalle_asiento
 export class DetalleAsiento {
   @PrimaryGeneratedColumn()
   id_detalle: number; // PK
 
-  // Monto. Utiliza decimal para precisión monetaria (DECIMAL 18,2 según tu diagrama)
-  @Column({ type: 'decimal', precision: 18, scale: 2 })
-  monto: number;
+  // --- CRÍTICO: Movimiento en Monedas Separadas (DECIMAL 18, 2) ---
+  // Estos campos contendrán el monto en el DEBE o HABER.
+  // La validación en el servicio asegurará que solo uno sea mayor a cero por línea (Debe o Haber).
+  @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
+  tipo_mov_debe_haber_bs: number;
 
-  @Column({ length: 10 })
-  tipo_movimiento: string; // 'Debe' o 'Haber' (Clave para la Partida Doble)
+  @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
+  tipo_mov_debe_haber_usd: number;
 
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  glosa_linea: string; // Glosa opcional para el detalle
+  @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
+  tipo_mov_debe_haber_ufv: number;
 
   // --- CLAVES FORÁNEAS (FKs) ---
 
-  // Muchos a Uno con Asiento (Cabecera)
-  @ManyToOne(() => Asiento, (asiento) => asiento.detalles)
+  // 1. FK: id_asiento (Cabecera)
+  @ManyToOne(() => Asiento, (asiento: Asiento) => asiento.detalles)
   @JoinColumn({ name: 'id_asiento' })
   asiento: Asiento;
 
-  // Muchos a Uno con Cuenta (Plan de Cuentas)
-  @ManyToOne(() => Cuenta, (cuenta) => cuenta.detallesAsiento)
+  // 2. FK: id_cuenta (Estructura)
+  @ManyToOne(() => Cuenta, (cuenta: Cuenta) => cuenta.detallesAsiento)
   @JoinColumn({ name: 'id_cuenta' })
   cuenta: Cuenta;
 
-  // Muchos a Uno con Moneda
-  @ManyToOne(() => Moneda, (moneda) => moneda.detallesAsiento)
-  @JoinColumn({ name: 'id_moneda' })
-  moneda: Moneda;
+  // 3. FK: id_cuenta_auxiliar (Desagregación, opcional)
+  @ManyToOne(
+    () => CuentaAuxiliar,
+    (cuentaAuxiliar: CuentaAuxiliar) => cuentaAuxiliar.detallesAsiento,
+    { nullable: true },
+  )
+  @JoinColumn({ name: 'id_cuenta_auxiliar' })
+  cuentaAuxiliar: CuentaAuxiliar;
+
+  // 4. FK: id_centro_costo (Desagregación, opcional)
+  @ManyToOne(
+    () => CentroCosto,
+    (centroCosto: CentroCosto) => centroCosto.detallesAsiento,
+    { nullable: true },
+  )
+  @JoinColumn({ name: 'id_centro_costo' })
+  centroCosto: CentroCosto;
 }
