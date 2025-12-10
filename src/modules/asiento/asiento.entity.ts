@@ -9,48 +9,72 @@ import {
 import { Empresa } from '../empresa/empresa.entity';
 import { Gestion } from '../gestion/gestion.entity';
 import { Usuario } from '../usuario/usuario.entity';
-import { TipoAsiento } from '../tipo-asiento/tipo-asiento.entity';
-import { DetalleAsiento } from '../detalle-asiento/detalle-asiento.entity'; // Para la relación de líneas
+import { DetalleAsiento } from '../detalle-asiento/detalle-asiento.entity';
 
-@Entity('asiento')
+@Entity('asiento') // Tabla: asiento
 export class Asiento {
   @PrimaryGeneratedColumn()
   id_asiento: number; // PK
 
   @Column({ type: 'date' })
-  fecha: Date; // Fecha en que se registra el asiento
+  fecha: Date;
 
-  @Column({ unique: true })
-  numero_asiento: number; // Correlativo por gestión o empresa
+  @Column({ length: 100 })
+  numero_comprobante: string;
 
-  @Column({ length: 50 })
-  estado: string; // Ejemplo: 'Borrador', 'Registrado', 'Contabilizado'
+  @Column({ type: 'text' })
+  glosa: string;
 
-  // --- CLAVES FORÁNEAS (FKs) ---
+  @Column({ length: 20 })
+  tipo_asiento: string; // Ej: 'Ingreso', 'Egreso', 'Traspaso'
 
-  // Muchos a Uno con Empresa
-  @ManyToOne(() => Empresa, (empresa) => empresa.asientos)
+  @Column({ length: 20, default: 'valido' })
+  estado: string; // valido, anulado, revertido
+
+  // Tipos de Cambio capturados en el momento del registro
+  @Column({ type: 'decimal', precision: 18, scale: 6 })
+  tipo_cambio_usd: number;
+
+  @Column({ type: 'decimal', precision: 18, scale: 6 })
+  tipo_cambio_ufv: number;
+
+  // --- CLAVES FORÁNEAS DE CONTEXTO ---
+
+  // 1. Muchos a Uno con Empresa
+  @ManyToOne(() => Empresa, (empresa: Empresa) => empresa.asientos)
   @JoinColumn({ name: 'id_empresa' })
   empresa: Empresa;
 
-  // Muchos a Uno con Gestión
-  @ManyToOne(() => Gestion, (gestion) => gestion.asientos)
+  // 2. Muchos a Uno con Gestión
+  @ManyToOne(() => Gestion, (gestion: Gestion) => gestion.asientos)
   @JoinColumn({ name: 'id_gestion' })
   gestion: Gestion;
 
-  // Muchos a Uno con Usuario (quién lo creó)
-  @ManyToOne(() => Usuario, (usuario) => usuario.asientos)
-  @JoinColumn({ name: 'id_usuario' })
-  usuario: Usuario;
+  // --- CLAVES DE AUDITORÍA Y REFERENCIA ---
 
-  // Muchos a Uno con TipoAsiento
-  @ManyToOne(() => TipoAsiento, (tipoAsiento) => tipoAsiento.asientos)
-  @JoinColumn({ name: 'id_tipo_asiento' })
-  tipoAsiento: TipoAsiento;
+  @Column({ type: 'timestamp' })
+  created_at: Date;
+
+  // 3. Muchos a Uno con Usuario (created_by)
+  @ManyToOne(() => Usuario, (usuario: Usuario) => usuario.asientosCreados)
+  @JoinColumn({ name: 'created_by' })
+  createdBy: Usuario;
+
+  // 4. Relación Recursiva: Reversión
+  // Muchos a Uno (Asiento que fue revertido)
+  @ManyToOne(() => Asiento, (asiento: Asiento) => asiento.revertidos, {
+    nullable: true,
+  })
+  @JoinColumn({ name: 'reversion_de' })
+  reversionDe: Asiento; // El asiento al que este revierte
+
+  // Uno a Muchos (Asientos que revierten a este)
+  @OneToMany(() => Asiento, (asiento: Asiento) => asiento.reversionDe)
+  revertidos: Asiento[];
 
   // --- RELACIÓN UNO A MUCHOS (Líneas) ---
 
   // Un Asiento tiene MUCHAS líneas de detalle
-  @OneToMany(() => DetalleAsiento, (detalle) => detalle.asiento)
+  @OneToMany(() => DetalleAsiento, (detalle: DetalleAsiento) => detalle.asiento)
   detalles: DetalleAsiento[];
 }

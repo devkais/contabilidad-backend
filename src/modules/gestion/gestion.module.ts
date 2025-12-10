@@ -3,7 +3,13 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Gestion } from './gestion.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Gestion])],
+  imports: [
+    // Registramos la entidad Gestion
+    TypeOrmModule.forFeature([Gestion]),
+  ],
+  // providers: [GestionService],
+  // controllers: [GestionController],
+  // Exportamos para que otros módulos (como Cuenta o Asiento) puedan usar su repositorio
   exports: [TypeOrmModule],
 })
 export class GestionModule {}

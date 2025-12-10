@@ -1,17 +1,16 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
-import { Usuario } from '../usuario/usuario.entity'; // Importamos Usuario para la relación
+import { UsuarioEmpresa } from '../usuario-empresa/usuario-empresa.entity'; // Importamos la tabla pivote
 
-@Entity('rol') // Nombre de la tabla en la base de datos
+@Entity('rol') // Tabla: rol
 export class Rol {
-  @PrimaryGeneratedColumn()
-  id_rol: number; // PK (Primary Key)
+  @PrimaryGeneratedColumn('increment')
+  id_rol: number; // PK
 
-  @Column({ length: 100, unique: true })
+  @Column({ length: 100 })
   nombre_rol: string;
 
-  // RELACIÓN: Uno a Muchos (Un Rol tiene muchos Usuarios)
-  // El segundo parámetro (usuario => usuario.rol) es la propiedad en la entidad Usuario
-  // que hace referencia a esta entidad Rol (la FK `id_rol` en la tabla usuario).
-  @OneToMany(() => Usuario, (usuario) => usuario.rol)
-  usuarios: Usuario[];
+  // RELACIÓN: Uno a Muchos (Un Rol se usa en muchas asignaciones Usuario-Empresa)
+  // Esta relación enlaza el rol con la tabla que define el acceso del usuario a una empresa.
+  @OneToMany(() => UsuarioEmpresa, (usuarioEmpresa) => usuarioEmpresa.rol)
+  usuarioEmpresas: UsuarioEmpresa[];
 }
