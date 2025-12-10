@@ -52,6 +52,7 @@ export class EmpresaController {
     }
     return empresa;
   }
+
   @Delete(':id_empresa')
   async deleteEmpresa(@Param('id_empresa') id_empresa: number) {
     const result = await this.empresaService.deleteEmpresa(id_empresa);
