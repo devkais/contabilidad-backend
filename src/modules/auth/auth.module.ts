@@ -1,4 +1,4 @@
-/*import { Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -30,4 +30,4 @@ import { LocalStrategy } from './strategies/local.strategy';
   providers: [AuthService, LocalStrategy], // Dejamos pendiente JwtStrategy
   exports: [AuthService, JwtModule],
 })
-export class AuthModule {}*/
+export class AuthModule {}

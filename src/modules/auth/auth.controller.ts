@@ -1,5 +1,5 @@
 // src/modules/auth/auth.controller.ts
-/*
+
 import { Controller, Post, Request, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
@@ -19,4 +19,3 @@ export class AuthController {
     return this.authService.login(usuario);
   }
 }
-*/

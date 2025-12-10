@@ -1,4 +1,4 @@
-/*import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { UsuarioService } from '../usuario/usuario.service';
@@ -22,7 +22,6 @@ export class AuthService {
     private usuarioService: UsuarioService,
     private jwtService: JwtService,
   ) {}
-
 
   async validateUser(email: string, pass: string): Promise<Usuario | null> {
     // 1. Tipamos explícitamente el resultado para eliminar el error 'Unsafe call/assignment'
@@ -76,4 +75,3 @@ export class AuthService {
     };
   }
 }
-*/
