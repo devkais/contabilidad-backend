@@ -13,7 +13,7 @@ import {
 import { UsuarioService } from '../services/usuario.service';
 import { CreateUsuarioDto, UpdateUsuarioDto } from '../dto';
 
-@Controller('usuarios') // Nota: Usar plural 'usuarios' es convención REST
+@Controller('usuario') // Nota: Usar plural 'usuarios' es convención REST
 export class UsuarioController {
   constructor(private readonly usuarioService: UsuarioService) {}
 
