@@ -32,10 +32,14 @@ export class EmpresaController {
   @Post()
   async postEmpresa(@Body() createEmpresaDto: CreateEmpresaDto) {
     try {
-      const empresa = await this.empresaService.postEmpresa(createEmpresaDto);
-      return empresa;
-    } catch (ex) {
-      throw new InternalServerErrorException(ex.message);
+      return await this.empresaService.postEmpresa(createEmpresaDto);
+    } catch (error) {
+      // Manejo seguro del error
+      let errorMessage = 'Error al crear la empresa.';
+      if (error instanceof Error) {
+        errorMessage += ' ' + error.message;
+      }
+      throw new InternalServerErrorException(errorMessage);
     }
   }
   @Put(':id_empresa')

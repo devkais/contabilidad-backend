@@ -35,11 +35,14 @@ export class UsuarioController {
   async postUsuario(@Body() createUsuarioDto: CreateUsuarioDto) {
     try {
       return await this.usuarioService.postUsuario(createUsuarioDto);
-    } catch (ex) {
-      // Manejo de error de clave duplicada (ej. email)
-      throw new InternalServerErrorException(
-        'Error al crear el usuario: ' + ex.message,
-      );
+    } catch (error) {
+      // Manejo seguro del error
+      let errorMessage = 'Error al crear el usuario.';
+      if (error instanceof Error) {
+        errorMessage += ' ' + error.message;
+      }
+
+      throw new InternalServerErrorException(errorMessage);
     }
   }
 
