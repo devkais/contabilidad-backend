@@ -1,18 +1,23 @@
+// src/modules/usuario/usuario.module.ts
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Usuario } from './usuario.entity';
-// import { UsuarioService } from './usuario.service'; // Se creará después
+// Importa las otras entidades si son necesarias para forFeature
+// import { Rol } from './entities/rol.entity';
+
+import { UsuarioService } from './services/usuario.service';
+import { UsuarioController } from './controllers/usuario.controller';
 
 @Module({
   imports: [
-    // Registramos la entidad Usuario
-    TypeOrmModule.forFeature([Usuario]),
+    TypeOrmModule.forFeature([
+      Usuario,
+      // Otras entidades...
+    ]),
   ],
-  // providers: [UsuarioService],
-  // controllers: [UsuarioController],
-
-  // Es CRÍTICO exportar TypeOrmModule y potencialmente el UsuarioService,
-  // para que el módulo de Autenticación pueda inyectar y usar el repositorio de Usuario.
-  exports: [TypeOrmModule],
+  providers: [UsuarioService],
+  controllers: [UsuarioController],
+  // Exportar el servicio es CLAVE para que AuthModule pueda inyectarlo
+  exports: [UsuarioService, TypeOrmModule],
 })
 export class UsuarioModule {}
