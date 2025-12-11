@@ -1,16 +1,17 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CuentaAuxiliar } from './cuenta-auxiliar.entity';
-// import { CuentaAuxiliarService } from './cuenta-auxiliar.service'; // Se creará después
+import { CuentaAuxiliarController } from './cuenta-auxiliar.controller';
+import { CuentaAuxiliarService } from './cuenta-auxiliar.service';
+import { EmpresaModule } from '../empresa/empresa.module';
 
 @Module({
   imports: [
-    // Registramos la entidad CuentaAuxiliar
     TypeOrmModule.forFeature([CuentaAuxiliar]),
+    EmpresaModule, // Al importar EmpresaModule, tenemos acceso a EmpresaService
   ],
-  // providers: [CuentaAuxiliarService],
-  // controllers: [CuentaAuxiliarController],
-  // Exportamos para que DetalleAsiento pueda usarla.
-  exports: [TypeOrmModule],
+  providers: [CuentaAuxiliarService],
+  controllers: [CuentaAuxiliarController],
+  exports: [CuentaAuxiliarService],
 })
 export class CuentaAuxiliarModule {}

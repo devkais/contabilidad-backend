@@ -11,6 +11,6 @@ import { EmpresaService } from './services/empresa.service';
   ],
   providers: [EmpresaService],
   controllers: [EmpresaController],
-  exports: [TypeOrmModule],
+  exports: [TypeOrmModule, EmpresaService],
 })
 export class EmpresaModule {}
