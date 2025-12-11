@@ -43,6 +43,9 @@ export class Cuenta {
   @JoinColumn({ name: 'id_cuenta_padre' })
   padre: Cuenta;
 
+  @Column()
+  id_empresa: number;
+
   // Uno a Muchos (Cuentas Hijas)
   @OneToMany(() => Cuenta, (cuenta: Cuenta) => cuenta.padre)
   hijas: Cuenta[];
