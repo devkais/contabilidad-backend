@@ -1,12 +1,15 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsuarioEmpresa } from './usuario-empresa.entity';
-import { UsuarioEmpresaController } from './controller/usuario-empresa.controller';
-import { UsuarioEmpresaService } from './services/usuario-empresa.service';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([UsuarioEmpresa])],
-  controllers: [UsuarioEmpresaController],
-  providers: [UsuarioEmpresaService],
+  imports: [
+    // Registramos la entidad UsuarioEmpresa
+    TypeOrmModule.forFeature([UsuarioEmpresa]),
+  ],
+  // providers: [UsuarioEmpresaService],
+  // controllers: [UsuarioEmpresaController],
+  // Exportamos para que la lógica de Autenticación pueda acceder a esta tabla.
+  exports: [TypeOrmModule],
 })
 export class UsuarioEmpresaModule {}
