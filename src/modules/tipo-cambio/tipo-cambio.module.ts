@@ -9,11 +9,12 @@ import { MonedaModule } from '../moneda/moneda.module';
   imports: [
     // Registramos la entidad TipoCambio
     TypeOrmModule.forFeature([TipoCambio]),
-    MonedaModule, // Se importa para que este módulo pueda inyectar MonedaService
+    MonedaModule,
+    // MonedaModule, // Se importa si el servicio de TipoCambio necesita inyectar MonedaRepository
   ],
   providers: [TipoCambioService],
   controllers: [TipoCambioController],
   // Exportamos para que la lógica de Asiento pueda consultar los tipos de cambio.
-  exports: [TipoCambioService],
+  exports: [TypeOrmModule, TipoCambioService],
 })
 export class TipoCambioModule {}
