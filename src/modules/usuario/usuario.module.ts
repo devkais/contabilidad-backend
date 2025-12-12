@@ -12,6 +12,6 @@ import { UsuarioService } from './services/usuario.service';
   providers: [UsuarioService],
   controllers: [UsuarioController],
   // Exportar el servicio es CLAVE para que AuthModule pueda inyectarlo
-  exports: [TypeOrmModule, UsuarioService],
+  exports: [TypeOrmModule.forFeature([Usuario]), UsuarioService],
 })
 export class UsuarioModule {}

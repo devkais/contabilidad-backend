@@ -12,6 +12,6 @@ import { EmpresaModule } from '../empresa/empresa.module';
   ],
   providers: [CuentaAuxiliarService],
   controllers: [CuentaAuxiliarController],
-  exports: [CuentaAuxiliarService],
+  exports: [TypeOrmModule.forFeature([CuentaAuxiliar]), CuentaAuxiliarService],
 })
 export class CuentaAuxiliarModule {}

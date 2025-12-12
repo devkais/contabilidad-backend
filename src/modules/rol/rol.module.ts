@@ -12,6 +12,6 @@ import { RolController } from './rol.controller'; // Se creará después
   providers: [RolService],
   controllers: [RolController],
   // Exportamos para que otros módulos puedan usar el repositorio de Rol
-  exports: [TypeOrmModule, RolService],
+  exports: [TypeOrmModule.forFeature([Rol]), RolService],
 })
 export class RolModule {}

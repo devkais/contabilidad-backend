@@ -16,6 +16,6 @@ import { EmpresaModule } from '../empresa/empresa.module'; // Para registrar la 
   providers: [BitacoraService],
   controllers: [BitacoraController],
   // Exportamos para que los servicios que manejan datos puedan registrar acciones.
-  exports: [TypeOrmModule],
+  exports: [TypeOrmModule.forFeature([Bitacora]), BitacoraService],
 })
 export class BitacoraModule {}

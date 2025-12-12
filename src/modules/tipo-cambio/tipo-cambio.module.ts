@@ -15,6 +15,6 @@ import { MonedaModule } from '../moneda/moneda.module';
   providers: [TipoCambioService],
   controllers: [TipoCambioController],
   // Exportamos para que la lógica de Asiento pueda consultar los tipos de cambio.
-  exports: [TypeOrmModule, TipoCambioService],
+  exports: [TypeOrmModule.forFeature([TipoCambio]), TipoCambioService],
 })
 export class TipoCambioModule {}

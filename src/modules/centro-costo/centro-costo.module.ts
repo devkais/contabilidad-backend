@@ -13,6 +13,6 @@ import { EmpresaModule } from '../empresa/empresa.module';
   providers: [CentroCostoService],
   controllers: [CentroCostoController],
   // Exportamos para que DetalleAsiento pueda usarla.
-  exports: [TypeOrmModule],
+  exports: [TypeOrmModule.forFeature([CentroCosto]), CentroCostoService],
 })
 export class CentroCostoModule {}

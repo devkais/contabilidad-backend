@@ -14,6 +14,6 @@ import { EmpresaModule } from '../empresa/empresa.module';
   providers: [GestionService],
   controllers: [GestionController],
   // Exportamos para que otros módulos (como Cuenta o Asiento) puedan usar su repositorio
-  exports: [TypeOrmModule],
+  exports: [TypeOrmModule.forFeature([Gestion]), GestionService],
 })
 export class GestionModule {}

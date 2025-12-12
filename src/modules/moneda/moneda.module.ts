@@ -12,6 +12,6 @@ import { MonedaController } from './moneda.controller';
   providers: [MonedaService],
   controllers: [MonedaController],
   // Exportamos para que la entidad TipoCambio y Cuenta puedan usarla.
-  exports: [TypeOrmModule, MonedaService],
+  exports: [TypeOrmModule.forFeature([Moneda]), MonedaService],
 })
 export class MonedaModule {}

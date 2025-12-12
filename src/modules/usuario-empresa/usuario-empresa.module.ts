@@ -18,6 +18,6 @@ import { RolModule } from '../rol/rol.module';
   providers: [UsuarioEmpresaService],
   controllers: [UsuarioEmpresaController],
   // Exportamos para que la lógica de Autenticación pueda acceder a esta tabla.
-  exports: [TypeOrmModule],
+  exports: [TypeOrmModule.forFeature([UsuarioEmpresa]), UsuarioEmpresaService],
 })
 export class UsuarioEmpresaModule {}
