@@ -5,16 +5,16 @@ import { Cuenta } from './cuenta.entity';
 import { CuentaController } from './cuenta.controller';
 import { CuentaService } from './cuenta.service';
 // Importamos las entidades FKs para el registro (aunque no se usen en este módulo)
-import { Empresa } from '../empresa/empresa.entity';
-import { Gestion } from '../gestion/gestion.entity';
-import { Moneda } from '../moneda/moneda.entity';
+import { EmpresaModule } from '../empresa/empresa.module';
+import { GestionModule } from '../gestion/gestion.module';
+import { MonedaModule } from '../moneda/moneda.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Cuenta]),
-    Empresa, // Aunque no se usan directamente, es bueno registrarlas
-    Gestion,
-    Moneda,
+    EmpresaModule, // Aunque no se usan directamente, es bueno registrarlas
+    GestionModule,
+    MonedaModule,
   ],
   providers: [CuentaService],
   controllers: [CuentaController],

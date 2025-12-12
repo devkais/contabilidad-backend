@@ -26,7 +26,13 @@ export class CuentaService {
   async getallCuenta(): Promise<Cuenta[]> {
     // Usamos 'relations' para cargar las 3 entidades externas y la recursiva (cuentaPadre)
     return this.cuentaRepository.find({
-      relations: ['empresa', 'gestion', 'moneda', 'cuentaPadre'],
+      relations: [
+        'empresa',
+        'gestion',
+        'moneda',
+        'padre', // ✅ Nombre corregido para cargar la Cuenta Padre
+        'hijas',
+      ],
     });
   }
 
@@ -34,7 +40,13 @@ export class CuentaService {
   async getCuentaById(id_cuenta: number): Promise<Cuenta | null> {
     const cuenta = await this.cuentaRepository.findOne({
       where: { id_cuenta },
-      relations: ['empresa', 'gestion', 'moneda', 'cuentaPadre'],
+      relations: [
+        'empresa',
+        'gestion',
+        'moneda',
+        'padre', // ✅ Nombre corregido para cargar la Cuenta Padre
+        'hijas',
+      ],
     });
 
     return cuenta;
