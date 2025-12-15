@@ -31,12 +31,12 @@ export class UsuarioService {
 
     // 1. Hashear contraseña
     const saltRounds = 10;
-    const contrasena_hash = await bcrypt.hash(password, saltRounds);
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
 
     // 2. Crear y guardar la entidad
     const newUsuario = this.usuarioRepository.create({
       ...userData,
-      contrasena_hash,
+      password: hashedPassword, // Usar la propiedad 'password' de la entidad
     });
 
     return this.usuarioRepository.save(newUsuario);
@@ -52,7 +52,7 @@ export class UsuarioService {
     // 1. Si se proporciona la contraseña, hashearla
     if (updateUsuarioDto.password) {
       const saltRounds = 10;
-      dataToUpdate.contrasena_hash = await bcrypt.hash(
+      dataToUpdate.password = await bcrypt.hash(
         updateUsuarioDto.password,
         saltRounds,
       );
@@ -81,7 +81,7 @@ export class UsuarioService {
     return this.usuarioRepository
       .createQueryBuilder('usuario')
       .where('usuario.email = :email', { email })
-      .addSelect('usuario.contrasena_hash') // Selecciona el hash, que es excluido por defecto
+      .addSelect('usuario.password') // Seleccionar la columna 'password' explícitamente
       .getOne();
   }
 }
