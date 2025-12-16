@@ -2,6 +2,7 @@ import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 import { UsuarioEmpresa } from '../usuario-empresa/usuario-empresa.entity';
 import { Asiento } from '../asiento/asiento.entity';
 import { Bitacora } from '../bitacora/bitacora.entity';
+import { Exclude } from 'class-transformer';
 
 @Entity('usuario') // Tabla: usuario
 export class Usuario {
@@ -14,8 +15,9 @@ export class Usuario {
   @Column({ length: 100, unique: true })
   email: string;
 
-  @Column({ length: 255 })
-  contrasena_hash: string; // Nuevo: Almacena el hash de la contraseña
+  @Exclude() // Evita que este campo se envíe en las respuestas JSON
+  @Column({ length: 255, name: 'password' })
+  password: string; // Almacena el hash de la contraseña
 
   @Column({ type: 'boolean', default: true })
   activo: boolean;
