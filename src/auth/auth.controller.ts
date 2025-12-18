@@ -7,9 +7,10 @@ export class AuthController {
 
   @Post('login')
   async login(
-    @Body('email') email: string,
+    @Body('nombre') nombre: string,
     @Body('password') password: string,
+    @Body('id_empresa') id_empresa: number,
   ) {
-    return this.authService.login(email, password);
+    return this.authService.login(nombre, password, id_empresa);
   }
 }
