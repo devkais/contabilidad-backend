@@ -8,6 +8,8 @@ import {
   Param,
   Post,
   Put,
+  Query,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { CentroCostoService } from './centro-costo.service';
 import { CreateCentroCostoDto, UpdateCentroCostoDto } from './dto';
@@ -17,16 +19,19 @@ export class CentroCostoController {
   constructor(private readonly centrocostoService: CentroCostoService) {}
 
   @Get()
-  async getAllCentroCosto() {
-    return this.centrocostoService.getallCentroCosto();
+  async getAllCentroCosto(@Query('id_empresa') id_empresa?: string) {
+    // Convertimos a número si existe el query param
+    const empresaId = id_empresa ? parseInt(id_empresa, 10) : undefined;
+    return this.centrocostoService.getallCentroCosto(empresaId);
   }
   @Get(':id_centro_costo')
-  async getCentroCostoById(@Param('id_centro_costo') id_centro_costo: number) {
+  async getCentroCostoById(
+    @Param('id_centro_costo', ParseIntPipe) id_centro_costo: number,
+  ) {
     const centrocosto =
       await this.centrocostoService.getCentroCostoById(id_centro_costo);
-    if (!centrocosto) {
-      throw new NotFoundException('CentroCosto no encontrada.');
-    }
+    if (!centrocosto)
+      throw new NotFoundException('Centro de costo no encontrado.');
     return centrocosto;
   }
 
@@ -47,17 +52,13 @@ export class CentroCostoController {
   }
   @Put(':id_centro_costo')
   async putCentroCosto(
-    @Param('id_centro_costo') id_centro_costo: number,
+    @Param('id_centro_costo', ParseIntPipe) id_centro_costo: number,
     @Body() updateCentroCostoDto: UpdateCentroCostoDto,
   ) {
-    const centrocosto = await this.centrocostoService.putCentroCosto(
+    return this.centrocostoService.putCentroCosto(
       id_centro_costo,
       updateCentroCostoDto,
     );
-    if (!centrocosto) {
-      throw new NotFoundException('CentroCosto no encontrada.');
-    }
-    return centrocosto;
   }
 
   @Delete(':id_centro_costo')

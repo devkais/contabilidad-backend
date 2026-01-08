@@ -1,14 +1,43 @@
-// src/modules/cuentas/dto/create-cuenta.dto.ts
-// NOTA: No incluimos id_cuenta, ya que es la PK y se autogenera.
+// backend/src/cuentas/dto/create-cuenta.dto.ts
+import {
+  IsString,
+  IsNumber,
+  IsBoolean,
+  IsOptional,
+  IsNotEmpty,
+} from 'class-validator';
+
 export class CreateCuentaDto {
+  @IsString()
+  @IsNotEmpty()
   codigo: string;
+
+  @IsString()
+  @IsNotEmpty()
   nombre: string;
+
+  @IsNumber()
   nivel: number;
-  id_cuenta_padre?: number | null; // Opcional para cuentas de nivel 1
-  id_empresa: number; // FK obligatoria
-  id_gestion: number; // FK obligatoria
-  id_moneda: number; // FK obligatoria
+
+  @IsOptional() // Muy importante para que acepte null
+  @IsNumber()
+  id_cuenta_padre: number | null;
+
+  @IsNumber()
+  id_empresa: number;
+
+  @IsNumber()
+  id_gestion: number;
+
+  @IsNumber()
+  id_moneda: number;
+
+  @IsString() // O IsEnum(ClaseCuenta) si tienes el enum en el back
   clase_cuenta: string;
-  activo: boolean = true;
-  es_movimiento: boolean; // CLAVE: True si es cuenta de último nivel
+
+  @IsBoolean()
+  activo: boolean;
+
+  @IsBoolean()
+  es_movimiento: boolean;
 }

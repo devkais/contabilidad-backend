@@ -34,6 +34,11 @@ export class Cuenta {
   @Column({ type: 'boolean' })
   es_movimiento: boolean; // True si es una cuenta de nivel de detalle (último nivel)
 
+  @Column({ name: 'id_cuenta_padre', type: 'int', nullable: true })
+  id_cuenta_padre: number | null;
+
+  // 2. LA RELACIÓN SE MANTIENE IGUAL
+
   // ------------------------------------------
   // RELACIÓN RECURSIVA (Jerarquía del Plan de Cuentas)
   // ------------------------------------------

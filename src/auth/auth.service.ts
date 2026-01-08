@@ -1,33 +1,19 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
-import * as bcrypt from 'bcrypt';
-import { UsuarioService } from '../modules/usuario/services/usuario.service';
+/*import contabilidadApi from '@/api/contabilidadApi';
+import { Usuario } from '@/features/usuarios/interfaces/usuario.interface';
 
-@Injectable()
-export class AuthService {
-  constructor(private readonly usuarioService: UsuarioService) {}
-
-  async login(email: string, password: string) {
-    const usuario = await this.usuarioService.findByEmailWithPassword(email);
-
-    if (!usuario) {
-      throw new UnauthorizedException('Usuario o contraseña incorrectos');
-    }
-
-    const passwordOk = await bcrypt.compare(password, usuario.password);
-
-    if (!passwordOk) {
-      throw new UnauthorizedException('Usuario o contraseña incorrectos');
-    }
-
-    // ⚠️ SIN JWT REAL (solo prueba de conexión)
-    return {
-      message: 'Login correcto',
-      usuario: {
-        id: usuario.id_usuario,
-        nombre: usuario.nombre,
-        email: usuario.email,
-      },
-      token: 'token-de-prueba', // ← SOLO PARA CONFIRMAR CONEXIÓN
-    };
-  }
+interface LoginResponse {
+  user: Usuario;
+  token: string;
+  id_empresa: number; // Según el back, necesitamos el contexto
+  id_gestion: number;
 }
+
+export const authService = {
+  login: async (username: string, password: string): Promise<LoginResponse> => {
+    const { data } = await contabilidadApi.post<LoginResponse>('/auth/login', {
+      username,
+      password,
+    });
+    return data;
+  },
+};*/

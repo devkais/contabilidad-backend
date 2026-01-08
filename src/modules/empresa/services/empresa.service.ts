@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Empresa } from '../empresa.entity';
 import { Repository } from 'typeorm';
-import { CreateEmpresaDto, EmpresaDto, UpdateEmpresaDto } from '../dto';
+import { Empresa } from '../empresa.entity';
+import { CreateEmpresaDto, UpdateEmpresaDto } from '../dto';
 
 @Injectable()
 export class EmpresaService {
@@ -11,36 +11,34 @@ export class EmpresaService {
     private readonly empresaRepository: Repository<Empresa>,
   ) {}
 
-  // El servicio debe devolver la entidad, no el DTO directamente.
   async getallEmpresas(): Promise<Empresa[]> {
-    return this.empresaRepository.find();
+    return await this.empresaRepository.find();
   }
 
-  async getEmpresaById(id_empresa: number): Promise<EmpresaDto | null> {
-    const empresa = await this.empresaRepository.findOne({
+  async getEmpresaById(id_empresa: number): Promise<Empresa | null> {
+    return await this.empresaRepository.findOne({
       where: { id_empresa },
     });
-    return empresa;
   }
-  async postEmpresa(createEmpresaDto: CreateEmpresaDto): Promise<EmpresaDto> {
+
+  async postEmpresa(createEmpresaDto: CreateEmpresaDto): Promise<Empresa> {
     const newEmpresa = this.empresaRepository.create(createEmpresaDto);
-    const empresa = this.empresaRepository.save(newEmpresa);
-    return empresa;
+    return await this.empresaRepository.save(newEmpresa);
   }
+
   async putEmpresa(
     id_empresa: number,
     updateEmpresaDto: UpdateEmpresaDto,
-  ): Promise<EmpresaDto | null> {
-    const empresa = this.empresaRepository.create(updateEmpresaDto);
-    const result = await this.empresaRepository.update({ id_empresa }, empresa);
-    if (!result.affected) {
-      return null;
-    }
+  ): Promise<Empresa | null> {
+    // Usamos la misma lógica de limpieza que en Centro de Costo
+    const { id_empresa: _id, ...data } = updateEmpresaDto as any;
+
+    await this.empresaRepository.update(id_empresa, data);
     return await this.getEmpresaById(id_empresa);
   }
+
   async deleteEmpresa(id_empresa: number): Promise<boolean> {
-    const result = await this.empresaRepository.delete({ id_empresa });
-    // Si result.affected es null o undefined, lo tratamos como 0.
+    const result = await this.empresaRepository.delete(id_empresa);
     return (result.affected ?? 0) > 0;
   }
 }

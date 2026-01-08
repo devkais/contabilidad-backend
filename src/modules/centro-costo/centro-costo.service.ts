@@ -14,7 +14,13 @@ export class CentroCostoService {
   ) {}
 
   // El servicio debe devolver la entidad, no el DTO directamente.
-  async getallCentroCosto(): Promise<CentroCosto[]> {
+  async getallCentroCosto(id_empresa?: number): Promise<CentroCosto[]> {
+    if (id_empresa) {
+      return this.centrocostoRepository.find({
+        where: { empresa: { id_empresa: id_empresa } },
+        order: { codigo: 'ASC' },
+      });
+    }
     return this.centrocostoRepository.find();
   }
 
@@ -55,37 +61,44 @@ export class CentroCostoService {
     id_centro_costo: number,
     updateCentroCostoDto: UpdateCentroCostoDto,
   ): Promise<CentroCosto | null> {
-    // Retornamos la entidad CentroCosto
+    // 1. Verificar si el Centro de Costo existe
+    const centroExistente = await this.getCentroCostoById(id_centro_costo);
+    if (!centroExistente) {
+      throw new NotFoundException(
+        `Centro de costo con ID ${id_centro_costo} no encontrado.`,
+      );
+    }
 
-    // Opción 1: Pasar el DTO de actualización directamente a TypeORM
-    // TypeORM intentará mapear los campos, incluyendo 'id_empresa' si existe
-    // en la entidad con @Column.
-
-    // 1. Opcionalmente, verificar que la empresa existe si el ID está en el DTO
+    // 2. Si el DTO trae un id_empresa, validamos que esa empresa exista
     if (updateCentroCostoDto.id_empresa) {
       const empresaExistente = await this.empresaService.getEmpresaById(
         updateCentroCostoDto.id_empresa,
       );
       if (!empresaExistente) {
         throw new NotFoundException(
-          `Empresa con ID ${updateCentroCostoDto.id_empresa} no encontrada para la actualización.`,
+          `Empresa con ID ${updateCentroCostoDto.id_empresa} no encontrada.`,
         );
       }
     }
 
-    // 2. Ejecutar la actualización directamente con el DTO (o sus campos)
-    const result = await this.centrocostoRepository.update(
-      { id_centro_costo },
-      // NO usamos .create() para el update. Pasamos el DTO de datos planos.
-      updateCentroCostoDto,
-    );
+    // 3. Limpieza de datos: Extraemos id_centro_costo para evitar que TypeORM
+    // intente sobrescribir la Primary Key, y separamos id_empresa.
+    const {
+      id_centro_costo: _,
+      id_empresa,
+      ...datosParaActualizar
+    } = updateCentroCostoDto;
 
-    if (!result.affected) {
-      return null;
-    }
+    // 4. Ejecutar la actualización
+    // Si id_empresa viene en el DTO, lo asignamos a través del objeto de relación
+    const updatePayload = {
+      ...datosParaActualizar,
+      ...(id_empresa && { empresa: { id_empresa } }),
+    };
 
-    // 3. Retornar el registro actualizado
-    // Cambié el retorno a CentroCosto (entidad) por consistencia
+    await this.centrocostoRepository.update(id_centro_costo, updatePayload);
+
+    // 5. Retornar la entidad fresca desde la base de datos
     return await this.getCentroCostoById(id_centro_costo);
   }
   async deleteCentroCosto(id_centro_costo: number): Promise<boolean> {

@@ -28,7 +28,7 @@ import { AsientoModule } from './modules/asiento/asiento.module';
 import { DetalleAsientoModule } from './modules/detalle-asiento/detalle-asiento.module';
 
 // cnoexion
-import { AuthModule } from './auth/auth.module';
+//import { AuthModule } from './auth/auth.module';
 @Module({
   imports: [
     // 1. CARGA GLOBAL DE VARIABLES DE ENTORNO
@@ -63,7 +63,7 @@ import { AuthModule } from './auth/auth.module';
     AsientoModule,
     DetalleAsientoModule,
     /// conexion
-    AuthModule,
+    //AuthModule,
 
     // --- MÓDULO ELIMINADO: TipoAsientoModule (ya no es necesario) ---
   ],
