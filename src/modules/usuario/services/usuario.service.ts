@@ -76,12 +76,21 @@ export class UsuarioService {
     return (result.affected ?? 0) > 0;
   }
 
-  // Método extra para login (necesario para AuthModule)
+  // Método para login por email (legacy)
   async findByEmailWithPassword(email: string): Promise<Usuario | null> {
     return this.usuarioRepository
       .createQueryBuilder('usuario')
       .where('usuario.email = :email', { email })
       .addSelect('usuario.password') // Seleccionar la columna 'password' explícitamente
+      .getOne();
+  }
+
+  // Método para login por nombre (nuevo para sistema contable)
+  async findByNombreWithPassword(nombre: string): Promise<Usuario | null> {
+    return this.usuarioRepository
+      .createQueryBuilder('usuario')
+      .where('usuario.nombre = :nombre', { nombre })
+      .addSelect('usuario.password')
       .getOne();
   }
 }
