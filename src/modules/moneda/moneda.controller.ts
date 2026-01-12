@@ -12,7 +12,7 @@ import {
 import { MonedaService } from './moneda.service';
 import { CreateMonedaDto, UpdateMonedaDto } from './dto';
 
-@Controller('moneda')
+@Controller('monedas')
 export class MonedaController {
   constructor(private readonly monedaService: MonedaService) {}
 

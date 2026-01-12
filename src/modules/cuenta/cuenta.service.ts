@@ -54,14 +54,34 @@ export class CuentaService {
 
   // 3. Eliminar una cuenta por su ID (DELETE)
   async deleteCuenta(id_cuenta: number): Promise<boolean> {
-    // El método .delete() puede ser peligroso si la cuenta está referenciada
-    // en detalle_asiento. La base de datos lanzará un error 500 si no se maneja
-    // la restricción FOREIGN KEY (ON DELETE RESTRICT o CASCADE).
+    // 1. Buscamos la cuenta incluyendo la relación 'hijas'
+    const cuentaExistente = await this.cuentaRepository.findOne({
+      where: { id_cuenta },
+      relations: ['hijas'],
+    });
 
-    const result = await this.cuentaRepository.delete({ id_cuenta });
+    if (!cuentaExistente) {
+      throw new NotFoundException(`La cuenta con ID ${id_cuenta} no existe.`);
+    }
 
-    // Verificamos si se afectó al menos una fila
-    return (result.affected ?? 0) > 0;
+    // 2. Verificación de seguridad: ¿Realmente tiene hijas?
+    // Usamos ?.length para evitar errores si 'hijas' es undefined
+    if (cuentaExistente.hijas && cuentaExistente.hijas.length > 0) {
+      throw new BadRequestException(
+        'No se puede eliminar: Esta cuenta es padre de otras subcuentas.',
+      );
+    }
+
+    try {
+      // 3. Eliminación física
+      const result = await this.cuentaRepository.delete(id_cuenta);
+      return (result.affected ?? 0) > 0;
+    } catch (error: unknown) {
+      // Este error salta si hay una llave foránea en la tabla 'asiento_detalle'
+      throw new BadRequestException(
+        'No se puede eliminar: La cuenta ya tiene movimientos contables registrados.',
+      );
+    }
   }
   // Obtener el Plan de Cuentas como un Árbol (funcionalidad avanzada)
   async getCuentasAsTree(id_empresa: number): Promise<Cuenta[]> {
@@ -79,19 +99,28 @@ export class CuentaService {
   // ----------------------------------------------------
 
   async postCuenta(createCuentaDto: CreateCuentaDto): Promise<Cuenta> {
-    const { id_empresa, id_gestion, id_moneda, id_cuenta_padre } =
+    const { id_empresa, id_gestion, id_moneda, id_cuenta_padre, codigo } =
       createCuentaDto;
 
-    // 1. VERIFICACIÓN DE EXISTENCIA DE LLAVES FORÁNEAS (Importante para evitar Error 500)
-    // Buscamos las entidades para validar, pero NO las adjuntamos.
-    const [empresa, gestion, moneda, cuentaPadre] = await Promise.all([
-      this.empresaService.getEmpresaById(id_empresa),
-      this.gestionService.getGestionById(id_gestion),
-      this.monedaService.getMonedaById(id_moneda),
-      id_cuenta_padre
-        ? this.getCuentaById(id_cuenta_padre)
-        : Promise.resolve(null),
-    ]);
+    // 1. VERIFICACIONES DE EXISTENCIA Y DUPLICIDAD
+    const [empresa, gestion, moneda, cuentaPadre, cuentaExistente] =
+      await Promise.all([
+        this.empresaService.getEmpresaById(id_empresa),
+        this.gestionService.getGestionById(id_gestion),
+        this.monedaService.getMonedaById(id_moneda),
+        id_cuenta_padre
+          ? this.getCuentaById(id_cuenta_padre)
+          : Promise.resolve(null),
+        // Verificamos si ya existe una cuenta con ese código en la misma empresa
+        this.cuentaRepository.findOne({ where: { codigo, id_empresa } }),
+      ]);
+
+    // Validar duplicidad de código
+    if (cuentaExistente) {
+      throw new BadRequestException(
+        `El código de cuenta "${codigo}" ya está registrado en esta empresa.`,
+      );
+    }
 
     // Validar que las entidades obligatorias existen
     if (!empresa)
@@ -105,23 +134,21 @@ export class CuentaService {
     if (!moneda)
       throw new NotFoundException(`Moneda con ID ${id_moneda} no encontrada.`);
 
-    // Validar la cuenta padre si se proporcionó un ID y no se encontró
     if (id_cuenta_padre && !cuentaPadre) {
       throw new NotFoundException(
         `Cuenta Padre con ID ${id_cuenta_padre} no encontrada.`,
       );
     }
+    if (cuentaPadre && !codigo.startsWith(cuentaPadre.codigo)) {
+      throw new BadRequestException(
+        `El código "${codigo}" debe comenzar con el código del padre "${cuentaPadre.codigo}"`,
+      );
+    }
 
-    // 2. CREACIÓN (FORMA SENCILLA)
-    // Pasamos el DTO plano directamente a .create() y .save()
-    // TypeORM insertará los IDs planos (id_empresa, id_gestion, id_moneda, id_cuenta_padre)
-    // en las columnas de la base de datos.
+    // 2. CREACIÓN
     const cuentaToCreate = this.cuentaRepository.create(createCuentaDto);
-
-    const cuenta = await this.cuentaRepository.save(cuentaToCreate);
-    return cuenta;
+    return await this.cuentaRepository.save(cuentaToCreate);
   }
-
   async putCuenta(
     id_cuenta: number,
     updateCuentaDto: UpdateCuentaDto,

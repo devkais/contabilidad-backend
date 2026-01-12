@@ -5,6 +5,7 @@ import {
   ManyToOne,
   OneToMany,
   JoinColumn,
+  Unique,
 } from 'typeorm';
 import { Empresa } from '../empresa/empresa.entity';
 import { Gestion } from '../gestion/gestion.entity';
@@ -12,6 +13,7 @@ import { Moneda } from '../moneda/moneda.entity';
 import { DetalleAsiento } from '../detalle-asiento/detalle-asiento.entity';
 
 @Entity('cuenta') // Tabla: cuenta
+@Unique(['codigo', 'id_empresa'])
 export class Cuenta {
   @PrimaryGeneratedColumn()
   id_cuenta: number; // PK
@@ -37,6 +39,14 @@ export class Cuenta {
   @Column({ name: 'id_cuenta_padre', type: 'int', nullable: true })
   id_cuenta_padre: number | null;
 
+  @Column({ name: 'id_empresa', type: 'int' })
+  id_empresa: number;
+
+  @Column({ name: 'id_gestion', type: 'int' })
+  id_gestion: number;
+
+  @Column({ name: 'id_moneda', type: 'int' })
+  id_moneda: number;
   // 2. LA RELACIÓN SE MANTIENE IGUAL
 
   // ------------------------------------------
@@ -47,9 +57,6 @@ export class Cuenta {
   @ManyToOne(() => Cuenta, (cuenta: Cuenta) => cuenta.hijas, { nullable: true })
   @JoinColumn({ name: 'id_cuenta_padre' })
   padre: Cuenta;
-
-  @Column()
-  id_empresa: number;
 
   // Uno a Muchos (Cuentas Hijas)
   @OneToMany(() => Cuenta, (cuenta: Cuenta) => cuenta.padre)
