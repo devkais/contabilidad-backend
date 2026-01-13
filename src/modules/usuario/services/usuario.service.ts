@@ -85,11 +85,11 @@ export class UsuarioService {
       .getOne();
   }
 
-  // Método para login por nombre (nuevo para sistema contable)
-  async findByNombreWithPassword(nombre: string): Promise<Usuario | null> {
+  // Método para login por username (nuevo para sistema contable)
+  async findByNombreWithPassword(username: string): Promise<Usuario | null> {
     return this.usuarioRepository
       .createQueryBuilder('usuario')
-      .where('usuario.nombre = :nombre', { nombre })
+      .where('usuario.username = :username', { username })
       .addSelect('usuario.password')
       .getOne();
   }

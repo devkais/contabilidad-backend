@@ -24,4 +24,7 @@ export class UpdateEmpresaDto {
   @MinLength(5, { message: 'El teléfono debe tener al menos 5 caracteres' })
   @MaxLength(50, { message: 'El teléfono no puede exceder 50 caracteres' })
   telefono?: string;
+
+  @IsOptional()
+  activo?: boolean;
 }

@@ -12,7 +12,7 @@ import {
 import { EmpresaService } from '../services/empresa.service';
 import { CreateEmpresaDto, UpdateEmpresaDto } from '../dto';
 
-@Controller('empresa')
+@Controller('empresas')
 export class EmpresaController {
   constructor(private readonly empresaService: EmpresaService) {}
 

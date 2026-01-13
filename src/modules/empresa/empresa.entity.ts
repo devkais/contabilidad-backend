@@ -25,6 +25,9 @@ export class Empresa {
   @Column({ length: 50 })
   telefono: string;
 
+  @Column({ default: true })
+  activo: boolean;
+
   // --- RELACIONES UNO A MUCHOS (OneToMany) ---
 
   // 1. Relación con Gestion
