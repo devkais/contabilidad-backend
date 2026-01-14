@@ -12,12 +12,23 @@ export class CentroCostoService {
   ) {}
 
   async getallCentros(id_empresa: number) {
-    return await this.centroRepository.find({ where: { id_empresa } });
+    return await this.centroRepository.find({
+      where: {
+        empresa: { id_empresa: id_empresa },
+      },
+      order: { codigo: 'ASC' },
+    });
   }
 
   async postCentroCosto(dto: CreateCentroCostoDto) {
-    const nuevo = this.centroRepository.create(dto);
-    return await this.centroRepository.save(nuevo);
+    const { id_empresa, ...datos } = dto;
+
+    const nuevoCentro = this.centroRepository.create({
+      ...datos,
+      empresa: { id_empresa } as any,
+    });
+
+    return await this.centroRepository.save(nuevoCentro);
   }
 
   async putCentroCosto(id: number, dto: UpdateCentroCostoDto) {
