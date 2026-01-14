@@ -20,6 +20,9 @@ export class CuentaAuxiliar {
   @Column({ length: 255 })
   nombre: string; // Ejemplo: 'Té', 'Café', 'Almuerzo de Empleados'
 
+  @Column()
+  id_empresa: number; // FK hacia Empresa
+
   @Column({ type: 'boolean', default: true })
   activo: boolean;
 
