@@ -1,70 +1,42 @@
 import {
-  Body,
   Controller,
   Get,
-  Delete,
-  InternalServerErrorException,
-  NotFoundException,
-  Param,
   Post,
   Put,
-  Query,
+  Delete,
+  Body,
+  Param,
   ParseIntPipe,
+  Query,
 } from '@nestjs/common';
-import { CentroCostoService } from './centro-costo.service';
 import { CreateCentroCostoDto, UpdateCentroCostoDto } from './dto';
+import { CentroCostoService } from './centro-costo.service';
 
-@Controller('centrocosto')
+@Controller('centrocosto') // Coincide con tu axios.create
 export class CentroCostoController {
-  constructor(private readonly centrocostoService: CentroCostoService) {}
+  constructor(private readonly centroCostoService: CentroCostoService) {}
 
   @Get()
-  async getAllCentroCosto(@Query('id_empresa') id_empresa?: string) {
-    // Convertimos a número si existe el query param
-    const empresaId = id_empresa ? parseInt(id_empresa, 10) : undefined;
-    return this.centrocostoService.getallCentroCosto(empresaId);
-  }
-  @Get(':id_centro_costo')
-  async getCentroCostoById(
-    @Param('id_centro_costo', ParseIntPipe) id_centro_costo: number,
-  ) {
-    const centrocosto =
-      await this.centrocostoService.getCentroCostoById(id_centro_costo);
-    if (!centrocosto)
-      throw new NotFoundException('Centro de costo no encontrado.');
-    return centrocosto;
+  async getAll(@Query('id_empresa', ParseIntPipe) id_empresa: number) {
+    return await this.centroCostoService.getallCentros(id_empresa);
   }
 
   @Post()
-  async postCentroCosto(@Body() createCentroCostoDto: CreateCentroCostoDto) {
-    try {
-      return await this.centrocostoService.postCentroCosto(
-        createCentroCostoDto,
-      );
-    } catch (error) {
-      // Manejo seguro del error
-      let errorMessage = 'Error al crear el centrocosto.';
-      if (error instanceof Error) {
-        errorMessage += ' ' + error.message;
-      }
-      throw new InternalServerErrorException(errorMessage);
-    }
-  }
-  @Put(':id_centro_costo')
-  async putCentroCosto(
-    @Param('id_centro_costo', ParseIntPipe) id_centro_costo: number,
-    @Body() updateCentroCostoDto: UpdateCentroCostoDto,
-  ) {
-    return this.centrocostoService.putCentroCosto(
-      id_centro_costo,
-      updateCentroCostoDto,
-    );
+  async create(@Body() createDto: CreateCentroCostoDto) {
+    return await this.centroCostoService.postCentroCosto(createDto);
   }
 
-  @Delete(':id_centro_costo')
-  async deleteCentroCosto(@Param('id_centro_costo') id_centro_costo: number) {
-    const result =
-      await this.centrocostoService.deleteCentroCosto(id_centro_costo);
-    if (!result) throw new NotFoundException('CentroCostoa no encontrada.');
+  @Put(':id')
+  async update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateDto: UpdateCentroCostoDto,
+  ) {
+    return await this.centroCostoService.putCentroCosto(id, updateDto);
+  }
+
+  @Delete(':id')
+  async delete(@Param('id', ParseIntPipe) id: number) {
+    await this.centroCostoService.deleteCentroCosto(id);
+    return { message: 'Centro de costo eliminado' };
   }
 }
