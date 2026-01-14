@@ -12,7 +12,7 @@ import {
 import { CuentaAuxiliarService } from './cuenta-auxiliar.service';
 import { CreateCuentaAuxiliarDto, UpdateCuentaAuxiliarDto } from './dto';
 
-@Controller('cuenta_auxiliar')
+@Controller('cuentas_auxiliares')
 export class CuentaAuxiliarController {
   constructor(private readonly cuentaAuxiliarService: CuentaAuxiliarService) {}
 
