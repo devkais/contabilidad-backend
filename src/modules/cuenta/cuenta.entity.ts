@@ -5,83 +5,48 @@ import {
   ManyToOne,
   OneToMany,
   JoinColumn,
-  Unique,
 } from 'typeorm';
-import { Empresa } from '../empresa/empresa.entity';
-import { Gestion } from '../gestion/gestion.entity';
 import { Moneda } from '../moneda/moneda.entity';
-import { DetalleAsiento } from '../detalle-asiento/detalle-asiento.entity';
 
-@Entity('cuenta') // Tabla: cuenta
-@Unique(['codigo', 'id_empresa'])
+@Entity('cuenta')
 export class Cuenta {
   @PrimaryGeneratedColumn()
-  id_cuenta: number; // PK
+  id_cuenta: number;
 
-  @Column({ length: 50 })
+  @Column({ length: 50, nullable: false })
   codigo: string;
 
-  @Column({ length: 255 })
+  @Column({ length: 255, nullable: false })
   nombre: string;
 
-  @Column()
-  nivel: number; // Nivel de la cuenta (ej: 1, 2, 3...)
-
-  @Column({ length: 20 })
-  clase_cuenta: string; // Activo, Pasivo, Patrimonio, Ingreso, Gasto, Costo
-
-  @Column({ type: 'boolean', default: true })
-  activo: boolean; // Si la cuenta está activa
-
-  @Column({ type: 'boolean' })
-  es_movimiento: boolean; // True si es una cuenta de nivel de detalle (último nivel)
+  @Column({ type: 'int', nullable: false })
+  nivel: number;
 
   @Column({ name: 'id_cuenta_padre', type: 'int', nullable: true })
   id_cuenta_padre: number | null;
 
-  @Column({ name: 'id_empresa', type: 'int' })
-  id_empresa: number;
-
-  @Column({ name: 'id_gestion', type: 'int' })
-  id_gestion: number;
-
-  @Column({ name: 'id_moneda', type: 'int' })
+  @Column({ name: 'id_moneda', type: 'int', nullable: false })
   id_moneda: number;
-  // 2. LA RELACIÓN SE MANTIENE IGUAL
 
-  // ------------------------------------------
-  // RELACIÓN RECURSIVA (Jerarquía del Plan de Cuentas)
-  // ------------------------------------------
+  @Column({ length: 20, nullable: true })
+  clase_cuenta: string; // Activo, Pasivo, Patrimonio, Ingreso, Gasto
 
-  // Muchos a Uno (Cuenta Padre)
-  @ManyToOne(() => Cuenta, (cuenta: Cuenta) => cuenta.hijas, { nullable: true })
+  @Column({ type: 'boolean', nullable: false })
+  es_movimiento: boolean; // Solo nivel 5 puede transaccionar
+
+  @Column({ type: 'boolean', default: true })
+  activo: boolean;
+
+  // --- RELACIONES SEGÚN DBML ---
+
+  @ManyToOne(() => Cuenta, (cuenta) => cuenta.subcuentas)
   @JoinColumn({ name: 'id_cuenta_padre' })
   padre: Cuenta;
 
-  // Uno a Muchos (Cuentas Hijas)
-  @OneToMany(() => Cuenta, (cuenta: Cuenta) => cuenta.padre)
-  hijas: Cuenta[];
+  @OneToMany(() => Cuenta, (cuenta) => cuenta.padre)
+  subcuentas: Cuenta[];
 
-  // --- CLAVES FORÁNEAS (FKs) ---
-
-  // Muchos a Uno con Empresa
-  @ManyToOne(() => Empresa, (empresa) => empresa.cuentas)
-  @JoinColumn({ name: 'id_empresa' })
-  empresa: Empresa;
-
-  // Muchos a Uno con Gestión
-  @ManyToOne(() => Gestion, (gestion) => gestion.cuentas)
-  @JoinColumn({ name: 'id_gestion' })
-  gestion: Gestion;
-
-  // Muchos a Uno con Moneda
   @ManyToOne(() => Moneda, (moneda) => moneda.cuentas)
   @JoinColumn({ name: 'id_moneda' })
   moneda: Moneda;
-
-  // --- RELACIÓN con Detalle_Asiento ---
-
-  // Uno a Muchos (Una Cuenta tiene muchos Detalle_Asientos)
-  @OneToMany(() => DetalleAsiento, (detalle: DetalleAsiento) => detalle.cuenta)
-  detallesAsiento: DetalleAsiento[];
 }

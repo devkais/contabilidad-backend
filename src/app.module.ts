@@ -1,34 +1,30 @@
-// src/app.module.ts
-
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { DatabaseModule } from './db/database.module'; // Ruta a DB
+import { DatabaseModule } from './db/database.module';
 
-// --- MÓDULOS DE NEGOCIO (Rutas ajustadas a './modules/...') ---
-
-// 1. Módulos de Seguridad y Contexto
-import { RolModule } from './modules/rol/rol.module';
+// Módulos de Seguridad y Contexto
+import { AuthModule } from './auth/auth.module'; // <-- RE-ACTIVADO
 import { UsuarioModule } from './modules/usuario/usuario.module';
 import { EmpresaModule } from './modules/empresa/empresa.module';
 import { GestionModule } from './modules/gestion/gestion.module';
-import { UsuarioEmpresaModule } from './modules/usuario-empresa/usuario-empresa.module'; // <-- NUEVO
+// Nota: Asegúrate de que RolModule y UsuarioEmpresaModule existan físicamente
+// import { RolModule } from './modules/rol/rol.module';
+// import { UsuarioEmpresaModule } from './modules/usuario-empresa/usuario-empresa.module';
 
-// 2. Módulos de Estructura y Valor
+// Módulos de Estructura y Valor
 import { MonedaModule } from './modules/moneda/moneda.module';
 import { TipoCambioModule } from './modules/tipo-cambio/tipo-cambio.module';
 import { CuentaModule } from './modules/cuenta/cuenta.module';
 
-// 3. Módulos de Desagregación y Auditoría
-import { CentroCostoModule } from './modules/centro-costo/centro-costo.module'; // <-- NUEVO
-import { CuentaAuxiliarModule } from './modules/cuenta-auxiliar/cuenta-auxiliar.module'; // <-- NUEVO
-import { BitacoraModule } from './modules/bitacora/bitacora.module'; // <-- NUEVO
+// Módulos de Desagregación y Auditoría
+import { CentroCostoModule } from './modules/centro-costo/centro-costo.module';
+import { CuentaAuxiliarModule } from './modules/cuenta-auxiliar/cuenta-auxiliar.module';
+import { BitacoraModule } from './modules/bitacora/bitacora.module';
 
-// 4. Módulos de Transacción (Núcleo)
+// Módulos de Transacción (Núcleo)
 import { AsientoModule } from './modules/asiento/asiento.module';
 import { DetalleAsientoModule } from './modules/detalle-asiento/detalle-asiento.module';
 
-// cnoexion
-//import { AuthModule } from './auth/auth.module';
 @Module({
   imports: [
     // 1. CARGA GLOBAL DE VARIABLES DE ENTORNO
@@ -40,32 +36,25 @@ import { DetalleAsientoModule } from './modules/detalle-asiento/detalle-asiento.
     // 2. MÓDULO DE BASE DE DATOS
     DatabaseModule,
 
-    // 3. MÓDULOS DE NEGOCIO
-
-    // Seguridad y Contexto
-    RolModule,
+    // 3. SEGURIDAD (Núcleo para Guards)
+    AuthModule,
     UsuarioModule,
+
+    // 4. CONTEXTO Y ESTRUCTURA
     EmpresaModule,
     GestionModule,
-    UsuarioEmpresaModule, // Nuevo módulo pivote
-
-    // Estructura y Valor
     MonedaModule,
     TipoCambioModule,
     CuentaModule,
 
-    // Desagregación y Auditoría
-    CentroCostoModule, // Nuevo
-    CuentaAuxiliarModule, // Nuevo
-    BitacoraModule, // Nuevo
+    // 5. DESAGREGACIÓN Y AUDITORÍA
+    CentroCostoModule,
+    CuentaAuxiliarModule,
+    BitacoraModule,
 
-    // Transacción Central
+    // 6. TRANSACCIÓN CENTRAL
     AsientoModule,
     DetalleAsientoModule,
-    /// conexion
-    //AuthModule,
-
-    // --- MÓDULO ELIMINADO: TipoAsientoModule (ya no es necesario) ---
   ],
 })
 export class AppModule {}

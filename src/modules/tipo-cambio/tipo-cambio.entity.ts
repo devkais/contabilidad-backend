@@ -7,23 +7,28 @@ import {
 } from 'typeorm';
 import { Moneda } from '../moneda/moneda.entity';
 
-@Entity('tipo_cambio') // Tabla: tipo_cambio
+@Entity('tipo_cambio')
 export class TipoCambio {
   @PrimaryGeneratedColumn()
-  id_tipo_cambio: number; // PK
+  id_tipo_cambio: number;
 
-  @Column({ type: 'date' })
-  fecha: Date; // La fecha en que aplica este tipo de cambio
+  @Column({ type: 'date', nullable: false })
+  fecha: Date;
 
-  // Valores de Tipo de Cambio, usando precisión alta (10, 6)
-  @Column({ type: 'decimal', precision: 10, scale: 6 })
-  valor_compra: number; // Tipo de cambio para la compra
+  @Column({ name: 'id_moneda_destino', type: 'int', nullable: false })
+  id_moneda_destino: number;
 
-  @Column({ type: 'decimal', precision: 10, scale: 6 })
-  valor_venta: number; // Tipo de cambio para la venta
+  @Column({ type: 'decimal', precision: 18, scale: 6, nullable: false })
+  oficial: number;
 
-  // --- RELACIÓN: Muchos a Uno con Moneda (FK: id_moneda_destino) ---
-  @ManyToOne(() => Moneda, (moneda: Moneda) => moneda.tiposCambioDestino)
-  @JoinColumn({ name: 'id_moneda_destino' }) // Apunta a la moneda cuyo TC se está registrando
+  @Column({ type: 'decimal', precision: 18, scale: 6, nullable: true })
+  venta: number;
+
+  @Column({ type: 'decimal', precision: 18, scale: 6, nullable: true })
+  compra: number;
+
+  // Relación según DBML
+  @ManyToOne(() => Moneda, (moneda) => moneda.tiposCambio)
+  @JoinColumn({ name: 'id_moneda_destino' })
   monedaDestino: Moneda;
 }

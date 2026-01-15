@@ -1,8 +1,23 @@
+import { IsString, IsOptional, IsDateString, IsNumber } from 'class-validator';
+
 export class UpdateGestionDto {
-  id_gestion?: number;
-  id_empresa?: number;
-  estado?: string;
+  @IsOptional()
+  @IsString()
   nombre?: string;
-  fecha_inicio?: Date;
-  fecha_fin?: Date;
+
+  @IsOptional()
+  @IsDateString()
+  fecha_inicio?: string;
+
+  @IsOptional()
+  @IsDateString()
+  fecha_fin?: string;
+
+  @IsOptional()
+  @IsString()
+  estado?: string;
+
+  @IsOptional()
+  @IsNumber()
+  id_empresa?: number;
 }

@@ -6,97 +6,38 @@ import {
   Get,
   Body,
   Param,
-  HttpCode,
-  HttpStatus,
-  NotFoundException,
   ParseIntPipe,
+  UseGuards,
 } from '@nestjs/common';
 import { DetalleAsientoService } from './detalle-asiento.service';
 import { CreateDetalleAsientoDto, UpdateDetalleAsientoDto } from './dto';
-import { DetalleAsiento } from './detalle-asiento.entity';
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 
-@Controller('detalle-asientos') // Ruta base: /api/v1/detalle-asientos
+@UseGuards(JwtAuthGuard)
+@Controller('detalle-asiento')
 export class DetalleAsientoController {
-  constructor(private readonly detalleAsientoService: DetalleAsientoService) {}
+  constructor(private readonly detalleService: DetalleAsientoService) {}
 
-  // --- 1. CREACIÓN (POST) ---
-  // POST /detalle-asientos
   @Post()
-  @HttpCode(HttpStatus.CREATED)
-  async create(
-    @Body() createDto: CreateDetalleAsientoDto,
-  ): Promise<DetalleAsiento> {
-    // El servicio valida las 4 FKs (Asiento, Cuenta, Auxiliar, Centro Costo).
-    return this.detalleAsientoService.postDetalleAsiento(createDto);
+  async create(@Body() dto: CreateDetalleAsientoDto) {
+    return await this.detalleService.postDetalle(dto);
   }
 
-  // --- 2. ACTUALIZACIÓN (PUT) ---
-  // PUT /detalle-asientos/:id
+  @Get('asiento/:id')
+  async findByAsiento(@Param('id', ParseIntPipe) id: number) {
+    return await this.detalleService.getByAsiento(id);
+  }
+
   @Put(':id')
   async update(
-    @Param('id', ParseIntPipe) id_detalle: number,
-    @Body() updateDto: UpdateDetalleAsientoDto,
-  ): Promise<DetalleAsiento> {
-    const updatedDetalle = await this.detalleAsientoService.putDetalleAsiento(
-      id_detalle,
-      updateDto,
-    );
-
-    if (!updatedDetalle) {
-      throw new NotFoundException(
-        `Línea de detalle con ID ${id_detalle} no encontrada.`,
-      );
-    }
-
-    return updatedDetalle;
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateDetalleAsientoDto,
+  ) {
+    return await this.detalleService.putDetalle(id, dto);
   }
 
-  // --- 3. OBTENER DETALLES POR ID DE ASIENTO ---
-  // GET /detalle-asientos/by-asiento/:id_asiento
-  // Este es el endpoint más útil en la práctica.
-  @Get('by-asiento/:id_asiento')
-  async findByAsientoId(
-    @Param('id_asiento', ParseIntPipe) id_asiento: number,
-  ): Promise<DetalleAsiento[]> {
-    return this.detalleAsientoService.getDetallesByAsientoId(id_asiento);
-  }
-
-  // --- 4. OBTENER TODAS LAS LÍNEAS DE DETALLE (GET ALL) ---
-  // GET /detalle-asientos
-  @Get()
-  async findAll(): Promise<DetalleAsiento[]> {
-    return this.detalleAsientoService.getallDetalleAsiento();
-  }
-
-  // --- 5. OBTENER LÍNEA DE DETALLE POR ID (GET BY ID) ---
-  // GET /detalle-asientos/:id
-  @Get(':id')
-  async findOne(
-    @Param('id', ParseIntPipe) id_detalle: number,
-  ): Promise<DetalleAsiento> {
-    const detalle =
-      await this.detalleAsientoService.getDetalleAsientoById(id_detalle);
-
-    if (!detalle) {
-      throw new NotFoundException(
-        `Línea de detalle con ID ${id_detalle} no encontrada.`,
-      );
-    }
-    return detalle;
-  }
-
-  // --- 6. ELIMINAR LÍNEA DE DETALLE (DELETE) ---
-  // DELETE /detalle-asientos/:id
   @Delete(':id')
-  @HttpCode(HttpStatus.NO_CONTENT) // Retorna 204 No Content si es exitoso
-  async delete(@Param('id', ParseIntPipe) id_detalle: number): Promise<void> {
-    const wasDeleted =
-      await this.detalleAsientoService.deleteDetalleAsiento(id_detalle);
-
-    if (!wasDeleted) {
-      throw new NotFoundException(
-        `Línea de detalle con ID ${id_detalle} no encontrada.`,
-      );
-    }
+  async remove(@Param('id', ParseIntPipe) id: number) {
+    return await this.detalleService.deleteDetalle(id);
   }
 }

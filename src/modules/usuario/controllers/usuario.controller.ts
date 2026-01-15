@@ -1,70 +1,65 @@
-// src/modules/usuario/controllers/usuario.controller.ts
 import {
   Body,
   Controller,
   Get,
   Delete,
   InternalServerErrorException,
-  NotFoundException,
   Param,
   Post,
   Put,
+  ParseIntPipe,
+  UseGuards,
 } from '@nestjs/common';
 import { UsuarioService } from '../services/usuario.service';
 import { CreateUsuarioDto, UpdateUsuarioDto } from '../dto';
+import { JwtAuthGuard } from '../../../auth/guards/jwt-auth.guard';
+import { Usuario } from '../usuario.entity';
 
-@Controller('usuario') // Nota: Usar plural 'usuarios' es convención REST
+@UseGuards(JwtAuthGuard) // Protegemos el módulo
+@Controller('usuario')
 export class UsuarioController {
   constructor(private readonly usuarioService: UsuarioService) {}
 
   @Get()
-  async getAllUsuarios() {
-    return this.usuarioService.getAllUsuarios();
+  async getAllUsuarios(): Promise<Usuario[]> {
+    return await this.usuarioService.getAllUsuarios();
   }
 
   @Get(':id_usuario')
-  async getUsuarioById(@Param('id_usuario') id_usuario: number) {
-    const usuario = await this.usuarioService.getUsuarioById(id_usuario);
-    if (!usuario) {
-      throw new NotFoundException('Usuario no encontrado.');
-    }
-    return usuario;
+  async getUsuarioById(
+    @Param('id_usuario', ParseIntPipe) id_usuario: number,
+  ): Promise<Usuario> {
+    return await this.usuarioService.getUsuarioById(id_usuario);
   }
 
   @Post()
-  async postUsuario(@Body() createUsuarioDto: CreateUsuarioDto) {
+  async postUsuario(
+    @Body() createUsuarioDto: CreateUsuarioDto,
+  ): Promise<Usuario> {
     try {
       return await this.usuarioService.postUsuario(createUsuarioDto);
-    } catch (error) {
-      // Manejo seguro del error
+    } catch (error: unknown) {
       let errorMessage = 'Error al crear el usuario.';
       if (error instanceof Error) {
         errorMessage += ' ' + error.message;
       }
-
       throw new InternalServerErrorException(errorMessage);
     }
   }
 
   @Put(':id_usuario')
   async putUsuario(
-    @Param('id_usuario') id_usuario: number,
+    @Param('id_usuario', ParseIntPipe) id_usuario: number,
     @Body() updateUsuarioDto: UpdateUsuarioDto,
-  ) {
-    const usuario = await this.usuarioService.putUsuario(
-      id_usuario,
-      updateUsuarioDto,
-    );
-    if (!usuario) {
-      throw new NotFoundException('Usuario no encontrado.');
-    }
-    return usuario;
+  ): Promise<Usuario> {
+    return await this.usuarioService.putUsuario(id_usuario, updateUsuarioDto);
   }
 
   @Delete(':id_usuario')
-  async deleteUsuario(@Param('id_usuario') id_usuario: number) {
-    const result = await this.usuarioService.deleteUsuario(id_usuario);
-    if (!result) throw new NotFoundException('Usuario no encontrado.');
-    return { message: 'Usuario eliminado con éxito.' };
+  async deleteUsuario(
+    @Param('id_usuario', ParseIntPipe) id_usuario: number,
+  ): Promise<{ message: string }> {
+    await this.usuarioService.deleteUsuario(id_usuario);
+    return { message: 'Usuario desactivado con éxito.' };
   }
 }

@@ -1,12 +1,12 @@
 import {
   Injectable,
-  ConflictException,
   NotFoundException,
+  ConflictException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Moneda } from './moneda.entity';
 import { Repository } from 'typeorm';
-import { CreateMonedaDto, MonedaDto, UpdateMonedaDto } from './dto';
+import { Moneda } from './moneda.entity';
+import { CreateMonedaDto, UpdateMonedaDto } from './dto';
 
 @Injectable()
 export class MonedaService {
@@ -15,72 +15,41 @@ export class MonedaService {
     private readonly monedaRepository: Repository<Moneda>,
   ) {}
 
-  // El servicio debe devolver la entidad, no el DTO directamente.
-  async getallMoneda(): Promise<Moneda[]> {
-    return this.monedaRepository.find();
+  async findAll(): Promise<Moneda[]> {
+    return await this.monedaRepository.find();
   }
 
-  async getMonedaById(id_moneda: number): Promise<Moneda | null> {
+  async findOne(id: number): Promise<Moneda> {
     const moneda = await this.monedaRepository.findOne({
-      where: { id_moneda },
+      where: { id_moneda: id },
     });
+    if (!moneda)
+      throw new NotFoundException(`Moneda con ID ${id} no encontrada`);
     return moneda;
   }
-  async postMoneda(createMonedaDto: CreateMonedaDto): Promise<MonedaDto> {
-    const newMoneda = this.monedaRepository.create(createMonedaDto);
-    const moneda = this.monedaRepository.save(newMoneda);
-    return moneda;
-  }
-  catch(error: unknown) {
-    const dbError = error as { code?: string; message?: string };
-    if (dbError.code === 'ER_DUP_ENTRY' || dbError.code === '23505') {
-      throw new ConflictException('Ya existe una moneda con ese código');
-    }
-    throw new Error(
-      'Error al crear la moneda: ' + (dbError.message || 'Error desconocido'),
-    );
-  }
 
-  async putMoneda(
-    id_moneda: number,
-    updateMonedaDto: UpdateMonedaDto,
-  ): Promise<MonedaDto | null> {
-    try {
-      // Primero verificamos si la moneda existe
-      const monedaExistente = await this.monedaRepository.findOne({
-        where: { id_moneda },
-      });
-      if (!monedaExistente) {
-        throw new NotFoundException('Moneda no encontradda');
-      }
-
-      //Actulizamos los campos
-      Object.assign(monedaExistente, updateMonedaDto);
-
-      //Guardamos los cambios
-      const monedaActualizada =
-        await this.monedaRepository.save(monedaExistente);
-      return monedaActualizada;
-    } catch (error: unknown) {
-      if (error instanceof NotFoundException) {
-        throw error;
-      }
-
-      //Manejo especifico del error de código único
-      const dbError = error as { code?: string; message?: string };
-      if (dbError.code === 'ER_DUP_ENTRY' || dbError.code === '23505') {
-        throw new ConflictException('Ya existe una moneda con ese código');
-      }
-      throw new Error(
-        'Error al actualizar la moneda: ' +
-          (dbError.message || 'Error desconocido'),
+  async create(createMonedaDto: CreateMonedaDto): Promise<Moneda> {
+    const existeCodigo = await this.monedaRepository.findOne({
+      where: { codigo: createMonedaDto.codigo },
+    });
+    if (existeCodigo)
+      throw new ConflictException(
+        `El código de moneda ${createMonedaDto.codigo} ya existe`,
       );
-    }
+
+    const nuevaMoneda = this.monedaRepository.create(createMonedaDto);
+    return await this.monedaRepository.save(nuevaMoneda);
   }
 
-  async deleteMoneda(id_moneda: number): Promise<boolean> {
-    const result = await this.monedaRepository.delete({ id_moneda });
-    // Si result.affected es null o undefined, lo tratamos como 0.
-    return (result.affected ?? 0) > 0;
+  async update(id: number, updateMonedaDto: UpdateMonedaDto): Promise<Moneda> {
+    const moneda = await this.findOne(id);
+    this.monedaRepository.merge(moneda, updateMonedaDto);
+    return await this.monedaRepository.save(moneda);
+  }
+
+  async remove(id: number): Promise<void> {
+    const moneda = await this.findOne(id);
+    // Nota: Aquí se podría validar si hay cuentas o tipos de cambio asociados antes de borrar
+    await this.monedaRepository.remove(moneda);
   }
 }

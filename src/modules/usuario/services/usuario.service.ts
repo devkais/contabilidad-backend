@@ -1,10 +1,13 @@
-// src/modules/usuario/services/usuario.service.ts
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { Usuario } from '../usuario.entity';
-import { Repository, UpdateResult } from 'typeorm';
 import { CreateUsuarioDto, UpdateUsuarioDto } from '../dto';
-import * as bcrypt from 'bcrypt'; // NECESITAS INSTALAR: npm install bcrypt && npm install -D @types/bcrypt
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UsuarioService {
@@ -13,84 +16,76 @@ export class UsuarioService {
     private readonly usuarioRepository: Repository<Usuario>,
   ) {}
 
-  // Lógica de Lectura (Existente, mejorada con relaciones)
-  async getAllUsuarios(): Promise<Usuario[]> {
-    return this.usuarioRepository.find({
-      // Incluir las relaciones (ej. usuarioEmpresas)
-      relations: ['usuarioEmpresas', 'bitacoras'],
-    });
-  }
-
-  async getUsuarioById(id_usuario: number): Promise<Usuario | null> {
-    return this.usuarioRepository.findOne({ where: { id_usuario } });
-  }
-
-  // Lógica de Creación (POST)
-  async postUsuario(createUsuarioDto: CreateUsuarioDto): Promise<Usuario> {
-    const { password, ...userData } = createUsuarioDto;
-
-    // 1. Hashear contraseña
-    const saltRounds = 10;
-    const hashedPassword = await bcrypt.hash(password, saltRounds);
-
-    // 2. Crear y guardar la entidad
-    const newUsuario = this.usuarioRepository.create({
-      ...userData,
-      password: hashedPassword, // Usar la propiedad 'password' de la entidad
-    });
-
-    return this.usuarioRepository.save(newUsuario);
-  }
-
-  // Lógica de Actualización (PUT)
-  async putUsuario(
-    id_usuario: number,
-    updateUsuarioDto: UpdateUsuarioDto,
-  ): Promise<Usuario | null> {
-    const dataToUpdate: any = { ...updateUsuarioDto };
-
-    // 1. Si se proporciona la contraseña, hashearla
-    if (updateUsuarioDto.password) {
-      const saltRounds = 10;
-      dataToUpdate.password = await bcrypt.hash(
-        updateUsuarioDto.password,
-        saltRounds,
-      );
-      delete dataToUpdate.password; // Eliminar el campo de texto plano
-    }
-
-    const result: UpdateResult = await this.usuarioRepository.update(
-      { id_usuario },
-      dataToUpdate,
-    );
-
-    if ((result.affected ?? 0) === 0) {
-      return null; // No encontrado o no actualizado
-    }
-    return await this.getUsuarioById(id_usuario);
-  }
-
-  // Lógica de Eliminación (DELETE)
-  async deleteUsuario(id_usuario: number): Promise<boolean> {
-    const result = await this.usuarioRepository.delete({ id_usuario });
-    return (result.affected ?? 0) > 0;
-  }
-
-  // Método para login por email (legacy)
-  async findByEmailWithPassword(email: string): Promise<Usuario | null> {
-    return this.usuarioRepository
-      .createQueryBuilder('usuario')
-      .where('usuario.email = :email', { email })
-      .addSelect('usuario.password') // Seleccionar la columna 'password' explícitamente
-      .getOne();
-  }
-
-  // Método para login por username (nuevo para sistema contable)
-  async findByNombreWithPassword(username: string): Promise<Usuario | null> {
-    return this.usuarioRepository
+  // CRÍTICO PARA AUTH: No cambiar el nombre ni la selección del password
+  async findByUsernameWithPassword(username: string): Promise<Usuario | null> {
+    return await this.usuarioRepository
       .createQueryBuilder('usuario')
       .where('usuario.username = :username', { username })
-      .addSelect('usuario.password')
+      .addSelect('usuario.password') // Necesario si usas @Exclude() en la entidad
       .getOne();
+  }
+
+  async getAllUsuarios(): Promise<Usuario[]> {
+    return await this.usuarioRepository.find({
+      where: { activo: true },
+    });
+  }
+
+  async getUsuarioById(id_usuario: number): Promise<Usuario> {
+    const usuario = await this.usuarioRepository.findOne({
+      where: { id_usuario },
+    });
+    if (!usuario)
+      throw new NotFoundException(`Usuario con ID ${id_usuario} no encontrado`);
+    return usuario;
+  }
+
+  async postUsuario(dto: CreateUsuarioDto): Promise<Usuario> {
+    const existe = await this.usuarioRepository.findOne({
+      where: { username: dto.username },
+    });
+    if (existe) throw new BadRequestException('El nombre de usuario ya existe');
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(dto.password, salt);
+
+    const newUsuario = this.usuarioRepository.create({
+      ...dto,
+      password: hashedPassword,
+    });
+
+    return await this.usuarioRepository.save(newUsuario);
+  }
+
+  async putUsuario(
+    id_usuario: number,
+    dto: UpdateUsuarioDto,
+  ): Promise<Usuario> {
+    // 1. Buscamos el usuario existente
+    const usuario = await this.getUsuarioById(id_usuario);
+
+    // 2. Aplicamos los cambios del DTO manualmente o con merge
+    // Esto evita pasar objetos de relación al repositorio
+    if (dto.username) usuario.username = dto.username;
+    if (dto.nombre_completo) usuario.nombre_completo = dto.nombre_completo;
+    if (dto.activo !== undefined) usuario.activo = dto.activo;
+
+    // 3. Manejo de password
+    if (dto.password) {
+      const salt = await bcrypt.genSalt(10);
+      usuario.password = await bcrypt.hash(dto.password, salt);
+    }
+
+    // 4. Usamos .save() en lugar de .update()
+    // .save() reconoce que el objeto tiene un ID y realizará un UPDATE solo de los campos locales
+    return await this.usuarioRepository.save(usuario);
+  }
+
+  async deleteUsuario(id_usuario: number): Promise<boolean> {
+    const usuario = await this.getUsuarioById(id_usuario);
+    // Preferimos borrado lógico para no romper la bitácora
+    usuario.activo = false;
+    await this.usuarioRepository.save(usuario);
+    return true;
   }
 }

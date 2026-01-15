@@ -1,70 +1,52 @@
 import {
-  Body,
   Controller,
   Get,
-  Delete,
-  InternalServerErrorException,
-  NotFoundException,
-  Param,
   Post,
+  Body,
   Put,
-  Query,
+  Param,
+  Delete,
   ParseIntPipe,
+  UseGuards,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { CentroCostoService } from './centro-costo.service';
 import { CreateCentroCostoDto, UpdateCentroCostoDto } from './dto';
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 
-@Controller('centrocosto')
+@UseGuards(JwtAuthGuard)
+@Controller('centro-costo')
 export class CentroCostoController {
-  constructor(private readonly centrocostoService: CentroCostoService) {}
+  constructor(private readonly ccService: CentroCostoService) {}
 
   @Get()
-  async getAllCentroCosto(@Query('id_empresa') id_empresa?: string) {
-    // Convertimos a número si existe el query param
-    const empresaId = id_empresa ? parseInt(id_empresa, 10) : undefined;
-    return this.centrocostoService.getallCentroCosto(empresaId);
+  async findAll() {
+    return await this.ccService.findAll();
   }
-  @Get(':id_centro_costo')
-  async getCentroCostoById(
-    @Param('id_centro_costo', ParseIntPipe) id_centro_costo: number,
-  ) {
-    const centrocosto =
-      await this.centrocostoService.getCentroCostoById(id_centro_costo);
-    if (!centrocosto)
-      throw new NotFoundException('Centro de costo no encontrado.');
-    return centrocosto;
+
+  @Get(':id')
+  async findOne(@Param('id', ParseIntPipe) id: number) {
+    return await this.ccService.findOne(id);
   }
 
   @Post()
-  async postCentroCosto(@Body() createCentroCostoDto: CreateCentroCostoDto) {
-    try {
-      return await this.centrocostoService.postCentroCosto(
-        createCentroCostoDto,
-      );
-    } catch (error) {
-      // Manejo seguro del error
-      let errorMessage = 'Error al crear el centrocosto.';
-      if (error instanceof Error) {
-        errorMessage += ' ' + error.message;
-      }
-      throw new InternalServerErrorException(errorMessage);
-    }
-  }
-  @Put(':id_centro_costo')
-  async putCentroCosto(
-    @Param('id_centro_costo', ParseIntPipe) id_centro_costo: number,
-    @Body() updateCentroCostoDto: UpdateCentroCostoDto,
-  ) {
-    return this.centrocostoService.putCentroCosto(
-      id_centro_costo,
-      updateCentroCostoDto,
-    );
+  @HttpCode(HttpStatus.CREATED)
+  async create(@Body() dto: CreateCentroCostoDto) {
+    return await this.ccService.create(dto);
   }
 
-  @Delete(':id_centro_costo')
-  async deleteCentroCosto(@Param('id_centro_costo') id_centro_costo: number) {
-    const result =
-      await this.centrocostoService.deleteCentroCosto(id_centro_costo);
-    if (!result) throw new NotFoundException('CentroCostoa no encontrada.');
+  @Put(':id')
+  async update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateCentroCostoDto,
+  ) {
+    return await this.ccService.update(id, dto);
+  }
+
+  @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async remove(@Param('id', ParseIntPipe) id: number) {
+    return await this.ccService.remove(id);
   }
 }

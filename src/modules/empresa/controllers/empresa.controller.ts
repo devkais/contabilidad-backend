@@ -2,52 +2,51 @@ import {
   Controller,
   Get,
   Post,
-  Put,
-  Delete,
   Body,
+  Put,
   Param,
+  Delete,
   ParseIntPipe,
-  NotFoundException,
+  UseGuards,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { EmpresaService } from '../services/empresa.service';
 import { CreateEmpresaDto, UpdateEmpresaDto } from '../dto';
+import { JwtAuthGuard } from '../../../auth/guards/jwt-auth.guard'; // Asumiendo tu ruta de Auth
 
-@Controller('empresas')
+@UseGuards(JwtAuthGuard)
+@Controller('empresa')
 export class EmpresaController {
   constructor(private readonly empresaService: EmpresaService) {}
 
   @Get()
-  async getAll() {
-    return await this.empresaService.getallEmpresas();
+  async findAll() {
+    return await this.empresaService.findAll();
   }
 
   @Get(':id')
-  async getById(@Param('id', ParseIntPipe) id: number) {
-    const empresa = await this.empresaService.getEmpresaById(id);
-    if (!empresa) throw new NotFoundException('Empresa no encontrada');
-    return empresa;
+  async findOne(@Param('id', ParseIntPipe) id: number) {
+    return await this.empresaService.findOne(id);
   }
 
   @Post()
-  async create(@Body() createDto: CreateEmpresaDto) {
-    return await this.empresaService.postEmpresa(createDto);
+  @HttpCode(HttpStatus.CREATED)
+  async create(@Body() createEmpresaDto: CreateEmpresaDto) {
+    return await this.empresaService.create(createEmpresaDto);
   }
 
   @Put(':id')
   async update(
     @Param('id', ParseIntPipe) id: number,
-    @Body() updateDto: UpdateEmpresaDto,
+    @Body() updateEmpresaDto: UpdateEmpresaDto,
   ) {
-    const empresa = await this.empresaService.putEmpresa(id, updateDto);
-    if (!empresa)
-      throw new NotFoundException('Empresa no encontrada para actualizar');
-    return empresa;
+    return await this.empresaService.update(id, updateEmpresaDto);
   }
 
   @Delete(':id')
-  async delete(@Param('id', ParseIntPipe) id: number) {
-    const deleted = await this.empresaService.deleteEmpresa(id);
-    if (!deleted) throw new NotFoundException('No se pudo eliminar la empresa');
-    return { message: 'Empresa eliminada con éxito' };
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async remove(@Param('id', ParseIntPipe) id: number) {
+    return await this.empresaService.remove(id);
   }
 }

@@ -1,65 +1,57 @@
 import {
-  Body,
   Controller,
   Get,
-  Delete,
-  InternalServerErrorException,
-  NotFoundException,
-  Param,
   Post,
+  Body,
   Put,
+  Param,
+  Delete,
+  ParseIntPipe,
+  UseGuards,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { GestionService } from './gestion.service';
 import { CreateGestionDto, UpdateGestionDto } from './dto';
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 
+@UseGuards(JwtAuthGuard)
 @Controller('gestion')
 export class GestionController {
   constructor(private readonly gestionService: GestionService) {}
 
   @Get()
-  async getAllGestion() {
-    return this.gestionService.getallGestion();
+  async findAll() {
+    return await this.gestionService.findAll();
   }
-  @Get(':id_gestion')
-  async getGestionById(@Param('id_gestion') id_gestion: number) {
-    const gestion = await this.gestionService.getGestionById(id_gestion);
-    if (!gestion) {
-      throw new NotFoundException('Gestion no encontrada.');
-    }
-    return gestion;
+
+  @Get('empresa/:id_empresa')
+  async findByEmpresa(@Param('id_empresa', ParseIntPipe) id_empresa: number) {
+    return await this.gestionService.findByEmpresa(id_empresa);
+  }
+
+  @Get(':id')
+  async findOne(@Param('id', ParseIntPipe) id: number) {
+    return await this.gestionService.findOne(id);
   }
 
   @Post()
-  async postGestion(@Body() createGestionDto: CreateGestionDto) {
-    try {
-      return await this.gestionService.postGestion(createGestionDto);
-    } catch (error) {
-      // Manejo seguro del error
-      let errorMessage = 'Error al crear el gestion.';
-      if (error instanceof Error) {
-        errorMessage += ' ' + error.message;
-      }
-      throw new InternalServerErrorException(errorMessage);
-    }
-  }
-  @Put(':id_gestion')
-  async putGestion(
-    @Param('id_gestion') id_gestion: number,
-    @Body() updateGestionDto: UpdateGestionDto,
-  ) {
-    const gestion = await this.gestionService.putGestion(
-      id_gestion,
-      updateGestionDto,
-    );
-    if (!gestion) {
-      throw new NotFoundException('Gestion no encontrada.');
-    }
-    return gestion;
+  @HttpCode(HttpStatus.CREATED)
+  async create(@Body() dto: CreateGestionDto) {
+    return await this.gestionService.create(dto);
   }
 
-  @Delete(':id_gestion')
-  async deleteGestion(@Param('id_gestion') id_gestion: number) {
-    const result = await this.gestionService.deleteGestion(id_gestion);
-    if (!result) throw new NotFoundException('Gestiona no encontrada.');
+  @Put(':id')
+  async update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateGestionDto,
+  ) {
+    return await this.gestionService.update(id, dto);
+  }
+
+  @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async remove(@Param('id', ParseIntPipe) id: number) {
+    return await this.gestionService.remove(id);
   }
 }

@@ -1,77 +1,52 @@
 import {
-  Body,
   Controller,
   Get,
-  Delete,
-  InternalServerErrorException,
-  NotFoundException,
-  Param,
   Post,
+  Body,
   Put,
+  Param,
+  Delete,
+  ParseIntPipe,
+  UseGuards,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { CuentaAuxiliarService } from './cuenta-auxiliar.service';
 import { CreateCuentaAuxiliarDto, UpdateCuentaAuxiliarDto } from './dto';
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 
-@Controller('cuenta_auxiliar')
+@UseGuards(JwtAuthGuard)
+@Controller('cuenta-auxiliar')
 export class CuentaAuxiliarController {
-  constructor(private readonly cuentaAuxiliarService: CuentaAuxiliarService) {}
+  constructor(private readonly caService: CuentaAuxiliarService) {}
 
   @Get()
-  async getAllCuentaAuxiliar() {
-    return this.cuentaAuxiliarService.getAllCuentaAuxiliar();
+  async findAll() {
+    return await this.caService.findAll();
   }
 
-  @Get(':id_cuenta_auxiliar')
-  async getCuentaAuxiliarById(
-    @Param('id_cuenta_auxiliar') id_cuenta_auxiliar: number,
-  ) {
-    const cuentaAuxiliar =
-      await this.cuentaAuxiliarService.getCuentaAuxiliarById(
-        id_cuenta_auxiliar,
-      );
-    if (!cuentaAuxiliar)
-      throw new NotFoundException('CuentaAuxiliar no encontrada.');
-    return cuentaAuxiliar;
+  @Get(':id')
+  async findOne(@Param('id', ParseIntPipe) id: number) {
+    return await this.caService.findOne(id);
   }
+
   @Post()
-  async postCuenteAxuliar(
-    @Body() createCuentaAuxiliarDto: CreateCuentaAuxiliarDto,
-  ) {
-    try {
-      return await this.cuentaAuxiliarService.postCuentaAuxiliar(
-        createCuentaAuxiliarDto,
-      );
-    } catch (error) {
-      let errorMessage = 'Error al crear la CuentaAuxiliar.';
-      if (error instanceof Error) {
-        errorMessage += ' ' + error.message;
-      }
-      throw new InternalServerErrorException(errorMessage);
-    }
-  }
-  @Put(':id_cuenta_auxiliar')
-  async putCuentaAuxiliar(
-    @Param('id_cuenta_auxiliar') id_cuenta_auxiliar: number,
-    @Body() updateCuentaAuxiliarDto: UpdateCuentaAuxiliarDto,
-  ) {
-    const cuentaAuxiliar = await this.cuentaAuxiliarService.putCuentaAuxiliar(
-      id_cuenta_auxiliar,
-      updateCuentaAuxiliarDto,
-    );
-    if (!cuentaAuxiliar) {
-      throw new NotFoundException('CuentaAuxiliar no encontrada.');
-    }
-    return cuentaAuxiliar;
+  @HttpCode(HttpStatus.CREATED)
+  async create(@Body() dto: CreateCuentaAuxiliarDto) {
+    return await this.caService.create(dto);
   }
 
-  @Delete(':id_cuenta_auxiliar')
-  async deleteCuentaAuxiliar(
-    @Param('id_cuenta_auxiliar') id_cuenta_auxiliar: number,
+  @Put(':id')
+  async update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateCuentaAuxiliarDto,
   ) {
-    const result =
-      await this.cuentaAuxiliarService.deleteCuentaAuxiliar(id_cuenta_auxiliar);
-    if (!result) {
-      throw new NotFoundException('CuentaAuxiliar no encontrada.');
-    }
+    return await this.caService.update(id, dto);
+  }
+
+  @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async remove(@Param('id', ParseIntPipe) id: number) {
+    return await this.caService.remove(id);
   }
 }

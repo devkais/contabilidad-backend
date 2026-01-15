@@ -3,37 +3,37 @@ import {
   PrimaryGeneratedColumn,
   Column,
   ManyToOne,
-  JoinColumn,
   OneToMany,
+  JoinColumn,
 } from 'typeorm';
-import { Empresa } from '../empresa/empresa.entity';
 import { DetalleAsiento } from '../detalle-asiento/detalle-asiento.entity';
 
-@Entity('centro_costo') // Tabla: centro_costo
+@Entity('centro_costo')
 export class CentroCosto {
   @PrimaryGeneratedColumn()
-  id_centro_costo: number; // PK
+  id_centro_costo: number;
 
-  @Column({ length: 50 })
+  @Column({ length: 50, nullable: false })
   codigo: string;
 
-  @Column({ length: 255 })
+  @Column({ length: 255, nullable: false })
   nombre: string;
 
-  @Column({ type: 'boolean', default: true })
-  activo: boolean;
+  @Column({ type: 'int', nullable: false })
+  nivel: number;
 
-  // --- FK: id_empresa ---
-  // Muchos a Uno con Empresa
-  @ManyToOne(() => Empresa, (empresa: Empresa) => empresa.centrosCosto)
-  @JoinColumn({ name: 'id_empresa' })
-  empresa: Empresa;
+  @Column({ name: 'id_padre', type: 'int', nullable: true })
+  id_padre: number | null;
 
-  // --- RELACIÓN con DetalleAsiento ---
-  // Uno a Muchos: Un Centro de Costo puede tener muchos Detalles de Asiento asociados
-  @OneToMany(
-    () => DetalleAsiento,
-    (detalle: DetalleAsiento) => detalle.centroCosto,
-  )
+  // --- RELACIONES SEGÚN DBML ---
+
+  @ManyToOne(() => CentroCosto, (cc) => cc.subcentros)
+  @JoinColumn({ name: 'id_padre' })
+  padre: CentroCosto;
+
+  @OneToMany(() => CentroCosto, (cc) => cc.padre)
+  subcentros: CentroCosto[];
+
+  @OneToMany(() => DetalleAsiento, (detalle) => detalle.centroCosto)
   detallesAsiento: DetalleAsiento[];
 }

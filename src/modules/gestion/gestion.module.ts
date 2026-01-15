@@ -7,13 +7,11 @@ import { EmpresaModule } from '../empresa/empresa.module';
 
 @Module({
   imports: [
-    // Registramos la entidad Gestion
     TypeOrmModule.forFeature([Gestion]),
-    EmpresaModule,
+    EmpresaModule, // Requerido para validar id_empresa
   ],
   providers: [GestionService],
   controllers: [GestionController],
-  // Exportamos para que otros módulos (como Cuenta o Asiento) puedan usar su repositorio
-  exports: [TypeOrmModule.forFeature([Gestion]), GestionService],
+  exports: [GestionService],
 })
 export class GestionModule {}

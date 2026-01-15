@@ -3,42 +3,37 @@ import {
   PrimaryGeneratedColumn,
   Column,
   ManyToOne,
-  JoinColumn,
   OneToMany,
+  JoinColumn,
 } from 'typeorm';
 import { Empresa } from '../empresa/empresa.entity';
 import { Asiento } from '../asiento/asiento.entity';
-import { Cuenta } from '../cuenta/cuenta.entity';
 
-@Entity('gestion') // Tabla: gestion
+@Entity('gestion')
 export class Gestion {
   @PrimaryGeneratedColumn()
-  id_gestion: number; // PK
+  id_gestion: number;
 
-  @Column({ length: 100 })
-  nombre: string; // Ejemplo: '2024' o 'Enero 2024'
+  @Column({ name: 'id_empresa', type: 'int', nullable: false })
+  id_empresa: number;
 
-  @Column({ type: 'date' })
+  @Column({ length: 100, nullable: false })
+  nombre: string;
+
+  @Column({ type: 'date', nullable: false })
   fecha_inicio: Date;
 
-  @Column({ type: 'date' })
+  @Column({ type: 'date', nullable: false })
   fecha_fin: Date;
 
   @Column({ length: 20, default: 'abierto' })
-  estado: string; // 'abierto', 'cerrado'. Una gestión cerrada previene modificaciones de asientos.
+  estado: string; // abierto, cerrado
 
-  // --- RELACIÓN: Muchos a Uno con Empresa (FK: id_empresa) ---
-  @ManyToOne(() => Empresa, (empresa: Empresa) => empresa.gestiones)
+  // Relaciones según DBML
+  @ManyToOne(() => Empresa, (empresa) => empresa.gestiones)
   @JoinColumn({ name: 'id_empresa' })
   empresa: Empresa;
 
-  // --- RELACIONES UNO A MUCHOS (OneToMany) ---
-
-  // 1. Relación con Asiento
-  @OneToMany(() => Asiento, (asiento: Asiento) => asiento.gestion)
+  @OneToMany(() => Asiento, (asiento) => asiento.gestion)
   asientos: Asiento[];
-
-  // 2. Relación con Cuenta (Permite tener diferentes Planes de Cuentas por Gestión, si se requiere)
-  @OneToMany(() => Cuenta, (cuenta: Cuenta) => cuenta.gestion)
-  cuentas: Cuenta[];
 }

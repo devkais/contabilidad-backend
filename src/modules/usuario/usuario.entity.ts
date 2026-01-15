@@ -1,41 +1,33 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
-import { UsuarioEmpresa } from '../usuario-empresa/usuario-empresa.entity';
 import { Asiento } from '../asiento/asiento.entity';
 import { Bitacora } from '../bitacora/bitacora.entity';
+
 import { Exclude } from 'class-transformer';
 
-@Entity('usuario') // Tabla: usuario
+@Entity('usuario')
 export class Usuario {
   @PrimaryGeneratedColumn()
-  id_usuario: number; // PK
+  id_usuario: number;
 
-  @Column({ length: 100 })
-  nombre: string;
+  @Column({ length: 50, unique: true })
+  username: string;
 
-  @Column({ length: 100, unique: true })
-  email: string;
+  @Exclude()
+  @Column({ length: 255 })
+  password: string;
 
-  @Exclude() // Evita que este campo se envíe en las respuestas JSON
-  @Column({ length: 255, name: 'password' })
-  password: string; // Almacena el hash de la contraseña
+  @Column({ name: 'nombre_completo', length: 100, nullable: true })
+  nombre_completo: string;
 
   @Column({ type: 'boolean', default: true })
   activo: boolean;
 
   // --- RELACIONES ---
-
-  // 1. Relación con tabla pivote (N:M con Empresa y Rol)
-  // Un Usuario puede estar asociado a muchas combinaciones Empresa-Rol
-  @OneToMany(() => UsuarioEmpresa, (usuarioEmpresa) => usuarioEmpresa.usuario)
-  usuarioEmpresas: UsuarioEmpresa[];
-
-  // 2. Relación con Asiento (Auditoría: created_by)
-  // Un Usuario puede crear muchos Asientos
-  @OneToMany(() => Asiento, (asiento) => asiento.createdBy)
+  @OneToMany(() => Asiento, (asiento) => asiento.created_by)
   asientosCreados: Asiento[];
 
-  // 3. Relación con Bitacora (Auditoría)
-  // Un Usuario genera muchas entradas de Bitacora
   @OneToMany(() => Bitacora, (bitacora) => bitacora.usuario)
   bitacoras: Bitacora[];
+
+  // --- COMPATIBILIDAD (DEPRECADO) ---
 }

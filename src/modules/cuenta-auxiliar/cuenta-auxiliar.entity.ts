@@ -3,37 +3,37 @@ import {
   PrimaryGeneratedColumn,
   Column,
   ManyToOne,
-  JoinColumn,
   OneToMany,
+  JoinColumn,
 } from 'typeorm';
-import { Empresa } from '../empresa/empresa.entity';
 import { DetalleAsiento } from '../detalle-asiento/detalle-asiento.entity';
 
-@Entity('cuenta_auxiliar') // Tabla: cuenta_auxiliar
+@Entity('cuenta_auxiliar')
 export class CuentaAuxiliar {
   @PrimaryGeneratedColumn()
-  id_cuenta_auxiliar: number; // PK
+  id_cuenta_auxiliar: number;
 
-  @Column({ length: 50 })
+  @Column({ length: 50, nullable: false })
   codigo: string;
 
-  @Column({ length: 255 })
-  nombre: string; // Ejemplo: 'Té', 'Café', 'Almuerzo de Empleados'
+  @Column({ length: 255, nullable: false })
+  nombre: string;
 
-  @Column({ type: 'boolean', default: true })
-  activo: boolean;
+  @Column({ type: 'int', nullable: false })
+  nivel: number;
 
-  // --- FK: id_empresa ---
-  // Muchos a Uno con Empresa
-  @ManyToOne(() => Empresa, (empresa: Empresa) => empresa.cuentasAuxiliares)
-  @JoinColumn({ name: 'id_empresa' })
-  empresa: Empresa;
+  @Column({ name: 'id_padre', type: 'int', nullable: true })
+  id_padre: number | null;
 
-  // --- RELACIÓN con DetalleAsiento ---
-  // Uno a Muchos: Una Cuenta Auxiliar puede tener muchos Detalles de Asiento asociados
-  @OneToMany(
-    () => DetalleAsiento,
-    (detalle: DetalleAsiento) => detalle.cuentaAuxiliar,
-  )
+  // --- RELACIONES SEGÚN DBML ---
+
+  @ManyToOne(() => CuentaAuxiliar, (ca) => ca.subauxiliares)
+  @JoinColumn({ name: 'id_padre' })
+  padre: CuentaAuxiliar;
+
+  @OneToMany(() => CuentaAuxiliar, (ca) => ca.padre)
+  subauxiliares: CuentaAuxiliar[];
+
+  @OneToMany(() => DetalleAsiento, (detalle) => detalle.cuentaAuxiliar)
   detallesAsiento: DetalleAsiento[];
 }

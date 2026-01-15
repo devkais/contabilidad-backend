@@ -1,67 +1,49 @@
 import {
-  Body,
   Controller,
   Get,
-  Delete,
-  InternalServerErrorException,
-  NotFoundException,
-  Param,
   Post,
+  Body,
   Put,
+  Param,
+  Delete,
+  ParseIntPipe,
+  UseGuards,
+  Query,
 } from '@nestjs/common';
 import { TipoCambioService } from './tipo-cambio.service';
 import { CreateTipoCambioDto, UpdateTipoCambioDto } from './dto';
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 
-@Controller('tipocambio')
+@UseGuards(JwtAuthGuard)
+@Controller('tipo-cambio')
 export class TipoCambioController {
-  constructor(private readonly tipocambioService: TipoCambioService) {}
+  constructor(private readonly tcService: TipoCambioService) {}
 
   @Get()
-  async getAllTipoCambio() {
-    return this.tipocambioService.getallTipoCambio();
+  async findAll() {
+    return await this.tcService.findAll();
   }
-  @Get(':id_tipo_cambio')
-  async getTipoCambioById(@Param('id_tipo_cambio') id_tipo_cambio: number) {
-    const tipocambio =
-      await this.tipocambioService.getTipoCambioById(id_tipo_cambio);
-    if (!tipocambio) {
-      throw new NotFoundException('TipoCambio no encontrada.');
-    }
-    return tipocambio;
+
+  @Get('buscar')
+  async findByFecha(@Query('fecha') fecha: string) {
+    return await this.tcService.findByFecha(fecha);
   }
 
   @Post()
-  async postTipoCambio(@Body() createTipoCambioDto: CreateTipoCambioDto) {
-    try {
-      return await this.tipocambioService.postTipoCambio(createTipoCambioDto);
-    } catch (error) {
-      // Manejo seguro del error
-      let errorMessage = 'Error al crear el tipocambio.';
-      if (error instanceof Error) {
-        errorMessage += ' ' + error.message;
-      }
-      throw new InternalServerErrorException(errorMessage);
-    }
-  }
-  @Put(':id_tipo_cambio')
-  async putTipoCambio(
-    @Param('id_tipo_cambio') id_tipo_cambio: number,
-    @Body() updateTipoCambioDto: UpdateTipoCambioDto,
-  ) {
-    const tipocambio = await this.tipocambioService.putTipoCambio(
-      id_tipo_cambio,
-      updateTipoCambioDto,
-    );
-    if (!tipocambio) {
-      throw new NotFoundException('TipoCambio no encontrada.');
-    }
-    return tipocambio;
+  async create(@Body() dto: CreateTipoCambioDto) {
+    return await this.tcService.create(dto);
   }
 
-  @Delete(':id_tipo_cambio')
-  async deleteTipoCambio(@Param('id_tipo_cambio') id_tipo_cambio: number) {
-    const result =
-      await this.tipocambioService.deleteTipoCambio(id_tipo_cambio);
-    if (!result) throw new NotFoundException('TipoCambioa no encontrada.');
+  @Put(':id')
+  async update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateTipoCambioDto,
+  ) {
+    return await this.tcService.update(id, dto);
+  }
+
+  @Delete(':id')
+  async remove(@Param('id', ParseIntPipe) id: number) {
+    return await this.tcService.remove(id);
   }
 }

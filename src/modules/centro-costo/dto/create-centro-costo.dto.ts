@@ -1,6 +1,40 @@
+import {
+  IsString,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  MaxLength,
+  Min,
+} from 'class-validator';
+
 export class CreateCentroCostoDto {
-  codigo: string; // Cambiado de simbolo a codigo
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(50)
+  codigo: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(255)
   nombre: string;
-  activo: boolean;
-  id_empresa: number;
+
+  @IsNumber()
+  @Min(1)
+  nivel: number;
+
+  @IsOptional()
+  @IsNumber()
+  id_padre?: number;
+}
+
+export class UpdateCentroCostoDto {
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  nombre?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(50)
+  codigo?: string;
 }

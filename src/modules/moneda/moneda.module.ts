@@ -5,13 +5,9 @@ import { MonedaService } from './moneda.service';
 import { MonedaController } from './moneda.controller';
 
 @Module({
-  imports: [
-    // Registramos la entidad Moneda
-    TypeOrmModule.forFeature([Moneda]),
-  ],
+  imports: [TypeOrmModule.forFeature([Moneda])],
   providers: [MonedaService],
   controllers: [MonedaController],
-  // Exportamos para que la entidad TipoCambio y Cuenta puedan usarla.
-  exports: [TypeOrmModule.forFeature([Moneda]), MonedaService],
+  exports: [MonedaService], // Exportamos para que TipoCambio y Cuenta puedan validar monedas
 })
 export class MonedaModule {}
