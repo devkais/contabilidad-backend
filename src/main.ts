@@ -1,36 +1,39 @@
-// src/main.ts
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { ValidationPipe } from '@nestjs/common'; // Añadir para validación global
+import { ValidationPipe } from '@nestjs/common';
+import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // 1. CONFIGURACIÓN DE CORS (CRÍTICO PARA LA CONEXIÓN FRONTEND)
-  // Permitimos solicitudes desde tu frontend Vite (puerto 5173 es el default de Vite)
+  // 1. CORS: Configuración para desarrollo con Vite/React
   app.enableCors({
-    origin: ['http://localhost:5173', 'http://127.0.0.1:5173'], // Añadir tu dominio real aquí si tienes uno
+    origin: ['http://localhost:5173', 'http://127.0.0.1:5173'],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-    credentials: true, // Importante para Cookies o JWT en headers
+    credentials: true,
   });
 
-  // 2. PREFIJO GLOBAL DE LA API (Recomendado)
+  // 2. PREFIJO GLOBAL: Todas las rutas serán /api/v1/...
   app.setGlobalPrefix('api/v1');
-  // Ahora, todas tus rutas serán accesibles en: http://localhost:3000/api/v1/usuarios
 
-  // 3. PIPES DE VALIDACIÓN GLOBAL
-  // Esto asegura que todos tus DTOs (Create, Update) sean validados automáticamente.
+  // 3. FILTRO DE EXCEPCIONES GLOBAL: Centraliza errores para auditoría
+  app.useGlobalFilters(new AllExceptionsFilter());
+
+  // 4. PIPES DE VALIDACIÓN: Estricto con DTOs
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true, // Elimina propiedades que no están definidas en el DTO
-      forbidNonWhitelisted: true, // Lanza error si hay propiedades desconocidas
-      transform: true, // Transforma los payloads a las instancias de los DTOs
+      whitelist: true, // Elimina campos no definidos en el DTO
+      forbidNonWhitelisted: true, // Lanza error si hay campos no permitidos
+      transform: true, // Convierte tipos (ej. string a number en params)
     }),
   );
 
-  // El puerto se lee de .env, que ya tienes configurado en app.module.ts
   const PORT = process.env.PORT || 3000;
   await app.listen(PORT);
-  console.log(`Application is running on: ${await app.getUrl()}/api/v1`);
+
+  console.log('--------------------------------------------------');
+  console.log(`🚀 Servidor contable listo en puerto: ${PORT}`);
+  console.log(`🌐 API Base: http://localhost:${PORT}/api/v1`);
+  console.log('--------------------------------------------------');
 }
 bootstrap();

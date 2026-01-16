@@ -1,4 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Empresa } from '../empresa.entity';
@@ -11,34 +15,41 @@ export class EmpresaService {
     private readonly empresaRepository: Repository<Empresa>,
   ) {}
 
-  async getallEmpresas(): Promise<Empresa[]> {
+  async findAll(): Promise<Empresa[]> {
     return await this.empresaRepository.find();
   }
 
-  async getEmpresaById(id_empresa: number): Promise<Empresa | null> {
-    return await this.empresaRepository.findOne({
-      where: { id_empresa },
+  async findOne(id: number): Promise<Empresa> {
+    const empresa = await this.empresaRepository.findOne({
+      where: { id_empresa: id },
     });
+    if (!empresa)
+      throw new NotFoundException(`Empresa con ID ${id} no encontrada`);
+    return empresa;
   }
 
-  async postEmpresa(createEmpresaDto: CreateEmpresaDto): Promise<Empresa> {
-    const newEmpresa = this.empresaRepository.create(createEmpresaDto);
-    return await this.empresaRepository.save(newEmpresa);
+  async create(createEmpresaDto: CreateEmpresaDto): Promise<Empresa> {
+    const existeNit = await this.empresaRepository.findOne({
+      where: { nit: createEmpresaDto.nit },
+    });
+    if (existeNit)
+      throw new ConflictException('El NIT ya se encuentra registrado');
+
+    const nuevaEmpresa = this.empresaRepository.create(createEmpresaDto);
+    return await this.empresaRepository.save(nuevaEmpresa);
   }
 
-  async putEmpresa(
-    id_empresa: number,
+  async update(
+    id: number,
     updateEmpresaDto: UpdateEmpresaDto,
-  ): Promise<Empresa | null> {
-    // Usamos la misma lógica de limpieza que en Centro de Costo
-    const { id_empresa: _id, ...data } = updateEmpresaDto as any;
-
-    await this.empresaRepository.update(id_empresa, data);
-    return await this.getEmpresaById(id_empresa);
+  ): Promise<Empresa> {
+    const empresa = await this.findOne(id);
+    this.empresaRepository.merge(empresa, updateEmpresaDto);
+    return await this.empresaRepository.save(empresa);
   }
 
-  async deleteEmpresa(id_empresa: number): Promise<boolean> {
-    const result = await this.empresaRepository.delete(id_empresa);
-    return (result.affected ?? 0) > 0;
+  async remove(id: number): Promise<void> {
+    const empresa = await this.findOne(id);
+    await this.empresaRepository.remove(empresa);
   }
 }

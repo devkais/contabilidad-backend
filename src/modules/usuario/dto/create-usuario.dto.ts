@@ -1,10 +1,30 @@
-// src/modules/usuario/dto/create-usuario.dto.ts
-// Usaremos 'password' en texto plano aquí, que será hasheado en el servicio
+import {
+  IsString,
+  IsNotEmpty,
+  IsEmail,
+  IsBoolean,
+  IsOptional,
+  MinLength,
+} from 'class-validator';
+
 export class CreateUsuarioDto {
-  nombre: string;
-  email: string;
+  @IsString()
+  @IsNotEmpty()
+  username: string;
+
+  @IsString()
+  @IsNotEmpty()
+  nombre_completo: string;
+
+  @IsEmail()
+  @IsOptional()
+  email?: string;
+
+  @IsString()
+  @MinLength(6)
   password: string;
-  activo: boolean = true;
-  // Nota: Las FK (id_rol) se añadirán aquí si no se usan tablas pivote,
-  // pero para esta tabla es suficiente con los campos directos.
+
+  @IsBoolean()
+  @IsOptional()
+  activo?: boolean = true;
 }

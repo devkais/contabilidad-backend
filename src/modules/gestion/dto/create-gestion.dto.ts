@@ -1,8 +1,45 @@
+import {
+  IsString,
+  IsNotEmpty,
+  IsDateString,
+  IsNumber,
+  IsOptional,
+  IsIn,
+  MaxLength,
+} from 'class-validator';
+
 export class CreateGestionDto {
-  id_gestion: number;
+  @IsNumber()
+  @IsNotEmpty()
   id_empresa: number;
-  estado: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(100)
   nombre: string;
-  fecha_inicio: Date;
-  fecha_fin: Date;
+
+  @IsDateString()
+  @IsNotEmpty()
+  fecha_inicio: string;
+
+  @IsDateString()
+  @IsNotEmpty()
+  fecha_fin: string;
+
+  @IsOptional()
+  @IsString()
+  @IsIn(['abierto', 'cerrado'])
+  estado?: string;
+}
+
+export class UpdateGestionDto {
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  nombre?: string;
+
+  @IsOptional()
+  @IsString()
+  @IsIn(['abierto', 'cerrado'])
+  estado?: string;
 }

@@ -1,16 +1,17 @@
-/*import { Body, Controller, Post } from '@nestjs/common';
+import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
 import { AuthService } from './auth.service';
+import { LoginDto } from './dto/login.dto';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('login')
-  async login(
-    @Body('nombre') nombre: string,
-    @Body('password') password: string,
-    @Body('id_empresa') id_empresa: number,
-  ) {
-    return this.authService.login(nombre, password, id_empresa);
+  @HttpCode(HttpStatus.OK)
+  async login(@Body() loginDto: LoginDto) {
+    // Validamos primero
+    const user = await this.authService.validateUser(loginDto);
+    // Si pasó la validación, generamos el token
+    return this.authService.login(user);
   }
-}*/
+}

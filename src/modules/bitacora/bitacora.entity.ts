@@ -4,40 +4,50 @@ import {
   Column,
   ManyToOne,
   JoinColumn,
+  CreateDateColumn,
 } from 'typeorm';
 import { Usuario } from '../usuario/usuario.entity';
 import { Empresa } from '../empresa/empresa.entity';
 
-@Entity('bitacora') // Tabla: bitacora
+@Entity('bitacora')
 export class Bitacora {
-  @PrimaryGeneratedColumn('increment')
-  id_bitacora: number; // PK
+  @PrimaryGeneratedColumn()
+  id_bitacora: number;
 
-  @Column({ length: 50 })
-  accion: string; // Ejemplo: 'CREAR_ASIENTO', 'MODIFICAR_CUENTA', 'CERRAR_GESTION'
+  @CreateDateColumn({ type: 'timestamp' })
+  fecha_hora: Date;
 
-  @Column({ length: 50 })
-  tabla_afectada: string; // Ejemplo: 'asiento', 'cuenta'
+  @Column({ name: 'id_usuario', type: 'int', nullable: false })
+  id_usuario: number;
 
-  @Column()
-  id_registro_afectado: number; // PK del registro afectado en la otra tabla
+  @Column({ name: 'id_empresa', type: 'int', nullable: false })
+  id_empresa: number;
 
-  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-  fecha_hora: Date; // Timestamp del evento
+  @Column({ length: 20, nullable: false })
+  accion: string; // INSERT, UPDATE, DELETE, ANULAR, IMPORT
 
-  @Column({ length: 50 })
-  ip_maquina: string; // IP del cliente que realizó la acción
+  @Column({ length: 50, nullable: false })
+  modulo_origen: string; // CONTABILIDAD, VENTAS_API, etc.
 
-  @Column({ type: 'text' })
-  detalle_cambio: string; // JSON o texto que describe los valores cambiados
+  @Column({ length: 50, nullable: false })
+  tabla_afectada: string;
 
-  // --- FK: id_usuario ---
-  @ManyToOne(() => Usuario, (usuario: Usuario) => usuario.bitacoras)
+  @Column({ type: 'int', nullable: false })
+  id_registro_afectado: number;
+
+  @Column({ type: 'json', nullable: true })
+  detalle_cambio: Record<string, unknown>; // Mapeo explícito en lugar de any
+
+  @Column({ length: 50, nullable: true })
+  ip_maquina: string;
+
+  // --- RELACIONES ---
+
+  @ManyToOne(() => Usuario)
   @JoinColumn({ name: 'id_usuario' })
   usuario: Usuario;
 
-  // --- FK: id_empresa ---
-  @ManyToOne(() => Empresa, (empresa: Empresa) => empresa.bitacoras)
+  @ManyToOne(() => Empresa)
   @JoinColumn({ name: 'id_empresa' })
   empresa: Empresa;
 }

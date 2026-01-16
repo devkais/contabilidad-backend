@@ -1,20 +1,35 @@
-import { IsOptional, IsString, MinLength, MaxLength } from 'class-validator';
+import { IsString, IsNotEmpty, MaxLength, IsOptional } from 'class-validator';
+
 export class CreateMonedaDto {
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(10)
+  codigo: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(100)
+  nombre: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(5)
+  simbolo: string;
+}
+
+export class UpdateMonedaDto {
+  @IsString()
   @IsOptional()
-  @IsString({ message: 'El nombre debe ser una cadena de texto' })
-  @MinLength(2, { message: 'El nombre debe tener al menos 2 caracteres' })
-  @MaxLength(100, { message: 'El nombre no puede exceder 100 caracteres' })
+  @MaxLength(10)
+  codigo?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(100)
   nombre?: string;
 
+  @IsString()
   @IsOptional()
-  @IsString({ message: 'El simbolo debe ser una cadena de texto' })
-  @MinLength(1, { message: 'El simbolo debe tener al menos 1 caracter' })
-  @MaxLength(10, { message: 'El simbolo no puede exceder 10 caracteres' })
+  @MaxLength(5)
   simbolo?: string;
-
-  @IsOptional()
-  @IsString({ message: 'El código debe ser una cadena de texto' })
-  @MinLength(1, { message: 'El NIT es requerido' })
-  @MaxLength(90, { message: 'El NIT no puede exceder 90 caracteres' })
-  codigo?: string;
 }

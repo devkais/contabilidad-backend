@@ -1,89 +1,83 @@
 import {
   Controller,
-  Post,
-  Put,
-  Delete,
   Get,
+  Post,
   Body,
+  Put,
   Param,
+  Delete,
+  ParseIntPipe,
+  UseGuards,
   HttpCode,
   HttpStatus,
-  NotFoundException,
-  ParseIntPipe,
+  Query, // <-- Vital para el contexto dinámico
 } from '@nestjs/common';
+
 import { AsientoService } from './asiento.service';
-import { CreateAsientoDto, UpdateAsientoDto } from './dto';
+
+import { CreateAsientoDto } from './dto';
+
 import { Asiento } from './asiento.entity';
 
-@Controller('asientos') // Ruta base: /api/v1/asientos
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+
+import { GetUser } from '../../common/decorators/get-user.decorator';
+
+@UseGuards(JwtAuthGuard)
+@Controller('asientos')
 export class AsientoController {
   constructor(private readonly asientoService: AsientoService) {}
 
-  // --- 1. CREACIÓN (POST) ---
-  // POST /asientos
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  async create(@Body() createAsientoDto: CreateAsientoDto): Promise<Asiento> {
-    // El servicio se encarga de la validación de las 4 FKs antes de guardar.
-    return this.asientoService.postAsiento(createAsientoDto);
+  async create(
+    @Body() dto: CreateAsientoDto,
+
+    @GetUser('id_usuario') id_usuario: number,
+  ): Promise<Asiento> {
+    // El servicio ahora valida que la gestion sea de la empresa enviada en el DTO
+
+    return await this.asientoService.postAsiento(dto, id_usuario);
   }
 
-  // --- 2. ACTUALIZACIÓN (PUT) ---
-  // PUT /asientos/:id
   @Put(':id')
   async update(
-    @Param('id', ParseIntPipe) id_asiento: number,
-    @Body() updateAsientoDto: UpdateAsientoDto,
+    @Param('id', ParseIntPipe) id: number,
+
+    @Body() dto: CreateAsientoDto,
+
+    @Query('id_empresa', ParseIntPipe) id_empresa: number, // <-- Candado de seguridad
   ): Promise<Asiento> {
-    // Llamar al servicio para actualizar el asiento
-    const updatedAsiento = await this.asientoService.putAsiento(
-      id_asiento,
-      updateAsientoDto,
-    );
-
-    if (!updatedAsiento) {
-      throw new NotFoundException(
-        `Asiento con ID ${id_asiento} no encontrado.`,
-      );
-    }
-
-    return updatedAsiento;
+    return await this.asientoService.putAsiento(id, dto, id_empresa);
   }
 
-  // --- 3. OBTENER TODOS LOS ASIENTOS (GET ALL) ---
-  // GET /asientos
   @Get()
-  async findAll(): Promise<Asiento[]> {
-    return this.asientoService.getallAsiento();
+  async findAll(
+    @Query('id_empresa', ParseIntPipe) id_empresa: number,
+
+    @Query('id_gestion', ParseIntPipe) id_gestion: number, // <-- Filtro de Libro Diario
+  ): Promise<Asiento[]> {
+    // Devuelve solo los asientos de la empresa y gestión seleccionada
+
+    return await this.asientoService.getallAsiento(id_empresa, id_gestion);
   }
 
-  // --- 4. OBTENER ASIENTO POR ID (GET BY ID) ---
-  // GET /asientos/:id
   @Get(':id')
   async findOne(
-    @Param('id', ParseIntPipe) id_asiento: number,
-  ): Promise<Asiento> {
-    const asiento = await this.asientoService.getAsientoById(id_asiento);
+    @Param('id', ParseIntPipe) id: number,
 
-    if (!asiento) {
-      throw new NotFoundException(
-        `Asiento con ID ${id_asiento} no encontrado.`,
-      );
-    }
-    return asiento;
+    @Query('id_empresa', ParseIntPipe) id_empresa: number,
+  ): Promise<Asiento> {
+    return await this.asientoService.getAsientoById(id, id_empresa);
   }
 
-  // --- 5. ELIMINAR ASIENTO (DELETE) ---
-  // DELETE /asientos/:id
   @Delete(':id')
-  @HttpCode(HttpStatus.NO_CONTENT) // Retorna 204 No Content si es exitoso
-  async delete(@Param('id', ParseIntPipe) id_asiento: number): Promise<void> {
-    const wasDeleted = await this.asientoService.deleteAsiento(id_asiento);
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async delete(
+    @Param('id', ParseIntPipe) id: number,
 
-    if (!wasDeleted) {
-      throw new NotFoundException(
-        `Asiento con ID ${id_asiento} no encontrado o no pudo ser eliminado (posiblemente referenciado en Detalle Asiento).`,
-      );
-    }
+    @Query('id_empresa', ParseIntPipe) id_empresa: number,
+  ): Promise<void> {
+    await this.asientoService.deleteAsiento(id, id_empresa);
   }
 }

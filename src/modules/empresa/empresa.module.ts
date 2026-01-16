@@ -5,12 +5,9 @@ import { EmpresaController } from './controllers/empresa.controller';
 import { EmpresaService } from './services/empresa.service';
 
 @Module({
-  imports: [
-    // Registramos la entidad Empresa
-    TypeOrmModule.forFeature([Empresa]),
-  ],
+  imports: [TypeOrmModule.forFeature([Empresa])],
   providers: [EmpresaService],
   controllers: [EmpresaController],
-  exports: [TypeOrmModule.forFeature([Empresa]), EmpresaService],
+  exports: [EmpresaService], // Exportamos el servicio para otros módulos
 })
 export class EmpresaModule {}

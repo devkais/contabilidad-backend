@@ -1,43 +1,62 @@
-// backend/src/cuentas/dto/create-cuenta.dto.ts
 import {
   IsString,
+  IsNotEmpty,
   IsNumber,
   IsBoolean,
   IsOptional,
-  IsNotEmpty,
+  MaxLength,
+  IsIn,
 } from 'class-validator';
 
 export class CreateCuentaDto {
   @IsString()
   @IsNotEmpty()
+  @MaxLength(50)
   codigo: string;
 
   @IsString()
   @IsNotEmpty()
+  @MaxLength(255)
   nombre: string;
 
   @IsNumber()
   nivel: number;
 
-  @IsOptional() // Muy importante para que acepte null
+  @IsOptional()
   @IsNumber()
-  id_cuenta_padre: number | null;
-
-  @IsNumber()
-  id_empresa: number;
-
-  @IsNumber()
-  id_gestion: number;
+  id_cuenta_padre?: number;
 
   @IsNumber()
   id_moneda: number;
 
-  @IsString() // O IsEnum(ClaseCuenta) si tienes el enum en el back
-  clase_cuenta: string;
-
-  @IsBoolean()
-  activo: boolean;
+  @IsString()
+  @IsOptional()
+  @IsIn(['Activo', 'Pasivo', 'Patrimonio', 'Ingreso', 'Gasto'])
+  clase_cuenta?: string;
 
   @IsBoolean()
   es_movimiento: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  activo?: boolean;
+
+  @IsNumber()
+  @IsNotEmpty()
+  id_empresa: number;
+}
+
+export class UpdateCuentaDto {
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  nombre?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  activo?: boolean;
+
+  @IsOptional()
+  @IsString()
+  clase_cuenta?: string;
 }

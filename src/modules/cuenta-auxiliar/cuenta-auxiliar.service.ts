@@ -1,71 +1,92 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { CuentaAuxiliar } from './cuenta-auxiliar.entity';
 import { Repository } from 'typeorm';
+import { CuentaAuxiliar } from './cuenta-auxiliar.entity';
 import { CreateCuentaAuxiliarDto, UpdateCuentaAuxiliarDto } from './dto';
-import { EmpresaService } from '../empresa/services/empresa.service';
 
 @Injectable()
 export class CuentaAuxiliarService {
   constructor(
     @InjectRepository(CuentaAuxiliar)
-    private readonly cuentaAuxiliarRepository: Repository<CuentaAuxiliar>,
-    private readonly empresaService: EmpresaService,
+    private readonly caRepository: Repository<CuentaAuxiliar>,
   ) {}
 
-  async getAllCuentaAuxiliar(): Promise<CuentaAuxiliar[]> {
-    return this.cuentaAuxiliarRepository.find();
-  }
-
-  async getCuentaAuxiliarById(
-    id_cuenta_auxiliar: number,
-  ): Promise<CuentaAuxiliar | null> {
-    const cuentaAuxiliar = await this.cuentaAuxiliarRepository.findOne({
-      where: { id_cuenta_auxiliar },
+  // Filtrar auxiliares por empresa seleccionada
+  async findAll(id_empresa: number): Promise<CuentaAuxiliar[]> {
+    return await this.caRepository.find({
+      where: { id_empresa }, // <--- FILTRO DE EMPRESA
+      relations: ['padre'],
+      order: { codigo: 'ASC' },
     });
-    return cuentaAuxiliar;
   }
 
-  async postCuentaAuxiliar(
-    createCuentaAuxiliarDto: CreateCuentaAuxiliarDto,
-  ): Promise<CuentaAuxiliar> {
-    const empresa = await this.empresaService.getEmpresaById(
-      createCuentaAuxiliarDto.id_empresa,
-    );
-    if (!empresa) {
+  // Buscar uno validando que pertenezca a la empresa
+  async findOne(id: number, id_empresa: number): Promise<CuentaAuxiliar> {
+    const auxiliar = await this.caRepository.findOne({
+      where: { id_cuenta_auxiliar: id, id_empresa }, // <--- FILTRO DE EMPRESA
+      relations: ['padre', 'subauxiliares'],
+    });
+    if (!auxiliar)
       throw new NotFoundException(
-        `Empresa con ID ${createCuentaAuxiliarDto.id_empresa} no encontrada.`,
+        `Cuenta auxiliar con ID ${id} no encontrada en esta empresa`,
+      );
+    return auxiliar;
+  }
+
+  async create(dto: CreateCuentaAuxiliarDto): Promise<CuentaAuxiliar> {
+    // 1. Validar Código Duplicado DENTRO de la misma empresa
+    const existe = await this.caRepository.findOne({
+      where: { codigo: dto.codigo, id_empresa: dto.id_empresa },
+    });
+    if (existe)
+      throw new BadRequestException(
+        `El código auxiliar ${dto.codigo} ya existe en esta empresa.`,
+      );
+
+    // 2. Validar Padre y Niveles (Asegurando mismo contexto de empresa)
+    if (dto.id_padre) {
+      const padre = await this.findOne(dto.id_padre, dto.id_empresa); // <--- BUSCA PADRE EN LA MISMA EMPRESA
+      if (dto.nivel !== padre.nivel + 1) {
+        throw new BadRequestException(`El nivel debe ser ${padre.nivel + 1}`);
+      }
+    } else if (dto.nivel !== 1) {
+      throw new BadRequestException('Un auxiliar raíz debe ser nivel 1.');
+    }
+
+    const nuevoAuxiliar = this.caRepository.create(dto);
+    return await this.caRepository.save(nuevoAuxiliar);
+  }
+
+  async update(
+    id: number,
+    dto: UpdateCuentaAuxiliarDto,
+    id_empresa: number,
+  ): Promise<CuentaAuxiliar> {
+    const auxiliar = await this.findOne(id, id_empresa);
+
+    // Validar código si cambia
+    if (dto.codigo && dto.codigo !== auxiliar.codigo) {
+      const existe = await this.caRepository.findOne({
+        where: { codigo: dto.codigo, id_empresa },
+      });
+      if (existe) throw new BadRequestException('El código ya está en uso.');
+    }
+
+    this.caRepository.merge(auxiliar, dto);
+    return await this.caRepository.save(auxiliar);
+  }
+
+  async remove(id: number, id_empresa: number): Promise<void> {
+    const auxiliar = await this.findOne(id, id_empresa);
+    if (auxiliar.subauxiliares && auxiliar.subauxiliares.length > 0) {
+      throw new BadRequestException(
+        'No se puede eliminar un auxiliar que tiene sub-niveles.',
       );
     }
-    const cuentaAuxiliarToCreate = this.cuentaAuxiliarRepository.create({
-      codigo: createCuentaAuxiliarDto.codigo,
-      nombre: createCuentaAuxiliarDto.nombre,
-      activo: createCuentaAuxiliarDto.activo,
-      empresa: empresa,
-    });
-    const cuentaAuxiliar = await this.cuentaAuxiliarRepository.save(
-      cuentaAuxiliarToCreate,
-    );
-    return cuentaAuxiliar;
-  }
-  async putCuentaAuxiliar(
-    id_cuenta_auxiliar: number,
-    updateCuentaAuxiliarDto: UpdateCuentaAuxiliarDto,
-  ): Promise<CuentaAuxiliar | null> {
-    const updateData = { ...updateCuentaAuxiliarDto };
-    const result = await this.cuentaAuxiliarRepository.update(
-      { id_cuenta_auxiliar },
-      updateData,
-    );
-    if (!result.affected) {
-      return null;
-    }
-    return await this.getCuentaAuxiliarById(id_cuenta_auxiliar);
-  }
-  async deleteCuentaAuxiliar(id_cuenta_auxiliar: number): Promise<boolean> {
-    const result = await this.cuentaAuxiliarRepository.delete({
-      id_cuenta_auxiliar,
-    });
-    return (result.affected ?? 0) > 0;
+    await this.caRepository.remove(auxiliar);
   }
 }

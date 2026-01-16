@@ -1,25 +1,44 @@
 import {
   IsString,
   IsNotEmpty,
-  IsBoolean,
   IsNumber,
   IsOptional,
+  MaxLength,
+  Min,
 } from 'class-validator';
 
 export class CreateCentroCostoDto {
   @IsString()
   @IsNotEmpty()
+  @MaxLength(50)
   codigo: string;
 
   @IsString()
   @IsNotEmpty()
+  @MaxLength(255)
   nombre: string;
 
-  @IsBoolean()
+  @IsNumber()
+  @Min(1)
+  nivel: number;
+
   @IsOptional()
-  activo?: boolean;
+  @IsNumber()
+  id_padre?: number;
 
   @IsNumber()
   @IsNotEmpty()
   id_empresa: number;
+}
+
+export class UpdateCentroCostoDto {
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  nombre?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(50)
+  codigo?: string;
 }

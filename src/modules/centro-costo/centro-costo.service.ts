@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CentroCosto } from './centro-costo.entity';
@@ -8,52 +12,89 @@ import { CreateCentroCostoDto, UpdateCentroCostoDto } from './dto';
 export class CentroCostoService {
   constructor(
     @InjectRepository(CentroCosto)
-    private readonly centroRepository: Repository<CentroCosto>,
+    private readonly ccRepository: Repository<CentroCosto>,
   ) {}
 
-  async getallCentros(id_empresa: number) {
-    return await this.centroRepository.find({
-      where: {
-        empresa: { id_empresa: id_empresa },
-      },
+  // Listar centros filtrados por la empresa seleccionada
+  async findAll(id_empresa: number): Promise<CentroCosto[]> {
+    return await this.ccRepository.find({
+      where: { id_empresa }, // <--- Filtro de seguridad por empresa
+      relations: ['padre'],
       order: { codigo: 'ASC' },
     });
   }
 
-  async postCentroCosto(dto: CreateCentroCostoDto) {
-    const { id_empresa, ...datos } = dto;
-
-    const nuevoCentro = this.centroRepository.create({
-      ...datos,
-      empresa: { id_empresa } as any,
+  // Buscar uno validando que pertenezca a la empresa del contexto
+  async findOne(id: number, id_empresa: number): Promise<CentroCosto> {
+    const centro = await this.ccRepository.findOne({
+      where: { id_centro_costo: id, id_empresa }, // <--- Candado de empresa
+      relations: ['padre', 'subcentros'],
     });
-
-    return await this.centroRepository.save(nuevoCentro);
+    if (!centro)
+      throw new NotFoundException(
+        `Centro de costo con ID ${id} no encontrado en esta empresa`,
+      );
+    return centro;
   }
 
-  async putCentroCosto(id: number, dto: UpdateCentroCostoDto) {
-    const centro = await this.centroRepository.preload({
-      id_centro_costo: id,
-      ...dto,
+  async create(dto: CreateCentroCostoDto): Promise<CentroCosto> {
+    // 1. Validar Código Duplicado DENTRO de la misma empresa
+    const existe = await this.ccRepository.findOne({
+      where: { codigo: dto.codigo, id_empresa: dto.id_empresa },
     });
-    if (!centro) throw new NotFoundException('Centro de costo no encontrado');
-    return await this.centroRepository.save(centro);
-  }
+    if (existe)
+      throw new BadRequestException(
+        `El código ${dto.codigo} ya está en uso para esta empresa.`,
+      );
 
-  async deleteCentroCosto(id: number) {
-    const result = await this.centroRepository.delete(id);
-    return (result.affected ?? 0) > 0;
-  }
-
-  async getCentroCostoById(id: number) {
-    const centro = await this.centroRepository.findOne({
-      where: { id_centro_costo: id },
-    });
-
-    if (!centro) {
-      throw new NotFoundException(`Centro de costo con ID ${id} no encontrado`);
+    // 2. Validar Padre y Niveles (Asegurando que el padre sea de la misma empresa)
+    if (dto.id_padre) {
+      const padre = await this.findOne(dto.id_padre, dto.id_empresa); // <--- Busca padre en el mismo contexto
+      if (dto.nivel !== padre.nivel + 1) {
+        throw new BadRequestException(
+          `El nivel debe ser secuencial al padre (${padre.nivel + 1})`,
+        );
+      }
+    } else if (dto.nivel !== 1) {
+      throw new BadRequestException(
+        'Un centro de costo raíz debe ser nivel 1.',
+      );
     }
 
-    return centro;
+    const nuevoCentro = this.ccRepository.create(dto);
+    return await this.ccRepository.save(nuevoCentro);
+  }
+
+  async update(
+    id: number,
+    dto: UpdateCentroCostoDto,
+    id_empresa: number,
+  ): Promise<CentroCosto> {
+    const centro = await this.findOne(id, id_empresa);
+
+    // Validar si el nuevo código ya existe en esta empresa
+    if (dto.codigo && dto.codigo !== centro.codigo) {
+      const existe = await this.ccRepository.findOne({
+        where: { codigo: dto.codigo, id_empresa },
+      });
+      if (existe)
+        throw new BadRequestException(
+          'El código ya está siendo usado por otro centro.',
+        );
+    }
+
+    this.ccRepository.merge(centro, dto);
+    return await this.ccRepository.save(centro);
+  }
+
+  async remove(id: number, id_empresa: number): Promise<void> {
+    const centro = await this.findOne(id, id_empresa);
+
+    if (centro.subcentros && centro.subcentros.length > 0) {
+      throw new BadRequestException(
+        'No se puede eliminar un centro que tiene sub-niveles vinculados.',
+      );
+    }
+    await this.ccRepository.remove(centro);
   }
 }

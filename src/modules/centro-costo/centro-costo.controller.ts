@@ -2,41 +2,64 @@ import {
   Controller,
   Get,
   Post,
-  Put,
-  Delete,
   Body,
+  Put,
   Param,
+  Delete,
   ParseIntPipe,
-  Query,
+  UseGuards,
+  HttpCode,
+  HttpStatus,
+  Query, // <-- Capturamos el contexto de empresa
 } from '@nestjs/common';
-import { CreateCentroCostoDto, UpdateCentroCostoDto } from './dto';
 import { CentroCostoService } from './centro-costo.service';
+import { CreateCentroCostoDto } from './dto';
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 
-@Controller('centrocosto') // Coincide con tu axios.create
+@UseGuards(JwtAuthGuard)
+@Controller('centro-costo')
 export class CentroCostoController {
-  constructor(private readonly centroCostoService: CentroCostoService) {}
+  constructor(private readonly ccService: CentroCostoService) {}
 
   @Get()
-  async getAll(@Query('id_empresa', ParseIntPipe) id_empresa: number) {
-    return await this.centroCostoService.getallCentros(id_empresa);
+  async findAll(@Query('id_empresa', ParseIntPipe) id_empresa: number) {
+    // Solo obtenemos los centros de costo de la empresa activa
+    return await this.ccService.findAll(id_empresa);
+  }
+
+  @Get(':id')
+  async findOne(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('id_empresa', ParseIntPipe) id_empresa: number,
+  ) {
+    // Validamos ID y Empresa para evitar fugas de datos
+    return await this.ccService.findOne(id, id_empresa);
   }
 
   @Post()
-  async create(@Body() createDto: CreateCentroCostoDto) {
-    return await this.centroCostoService.postCentroCosto(createDto);
+  @HttpCode(HttpStatus.CREATED)
+  async create(@Body() dto: CreateCentroCostoDto) {
+    // id_empresa viaja dentro del objeto 'dto' enviado desde el frontend
+    return await this.ccService.create(dto);
   }
 
   @Put(':id')
   async update(
     @Param('id', ParseIntPipe) id: number,
-    @Body() updateDto: UpdateCentroCostoDto,
+    @Body() dto: CreateCentroCostoDto,
+    @Query('id_empresa', ParseIntPipe) id_empresa: number,
   ) {
-    return await this.centroCostoService.putCentroCosto(id, updateDto);
+    // Aseguramos que la actualización ocurra dentro del contexto correcto
+    return await this.ccService.update(id, dto, id_empresa);
   }
 
   @Delete(':id')
-  async delete(@Param('id', ParseIntPipe) id: number) {
-    await this.centroCostoService.deleteCentroCosto(id);
-    return { message: 'Centro de costo eliminado' };
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async remove(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('id_empresa', ParseIntPipe) id_empresa: number,
+  ) {
+    // Eliminación protegida por ID de empresa
+    return await this.ccService.remove(id, id_empresa);
   }
 }

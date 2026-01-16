@@ -7,53 +7,69 @@ import {
 } from 'typeorm';
 import { Asiento } from '../asiento/asiento.entity';
 import { Cuenta } from '../cuenta/cuenta.entity';
+import { Empresa } from '../empresa/empresa.entity';
 import { CentroCosto } from '../centro-costo/centro-costo.entity';
 import { CuentaAuxiliar } from '../cuenta-auxiliar/cuenta-auxiliar.entity';
 
-@Entity('detalle_asiento') // Tabla: detalle_asiento
+@Entity('detalle_asiento')
 export class DetalleAsiento {
   @PrimaryGeneratedColumn()
-  id_detalle: number; // PK
+  id_detalle: number;
 
-  // --- CRÍTICO: Movimiento en Monedas Separadas (DECIMAL 18, 2) ---
-  // Estos campos contendrán el monto en el DEBE o HABER.
-  // La validación en el servicio asegurará que solo uno sea mayor a cero por línea (Debe o Haber).
+  @Column({ name: 'id_asiento', type: 'int', nullable: false })
+  id_asiento: number;
+
+  @Column({ name: 'id_cuenta', type: 'int', nullable: false })
+  id_cuenta: number;
+
+  @Column({ name: 'id_empresa', type: 'int', nullable: false })
+  id_empresa: number;
+
+  @Column({ name: 'id_centro_costo', type: 'int', nullable: true })
+  id_centro_costo: number | null;
+
+  @Column({ name: 'id_cuenta_auxiliar', type: 'int', nullable: true })
+  id_cuenta_auxiliar: number | null;
+
+  @Column({ length: 255, nullable: true })
+  glosa_detalle: string;
+
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
-  tipo_mov_debe_haber_bs: number;
+  debe_bs: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
-  tipo_mov_debe_haber_usd: number;
+  haber_bs: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
-  tipo_mov_debe_haber_ufv: number;
+  debe_sus: number;
 
-  // --- CLAVES FORÁNEAS (FKs) ---
+  @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
+  haber_sus: number;
 
-  // 1. FK: id_asiento (Cabecera)
-  @ManyToOne(() => Asiento, (asiento: Asiento) => asiento.detalles)
+  @Column({ length: 10, nullable: true })
+  codigo_flujo: string;
+
+  // --- RELACIONES ---
+
+  @ManyToOne(() => Asiento, (asiento) => asiento.detalles, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'id_asiento' })
   asiento: Asiento;
 
-  // 2. FK: id_cuenta (Estructura)
-  @ManyToOne(() => Cuenta, (cuenta: Cuenta) => cuenta.detallesAsiento)
+  @ManyToOne(() => Cuenta)
   @JoinColumn({ name: 'id_cuenta' })
   cuenta: Cuenta;
 
-  // 3. FK: id_cuenta_auxiliar (Desagregación, opcional)
-  @ManyToOne(
-    () => CuentaAuxiliar,
-    (cuentaAuxiliar: CuentaAuxiliar) => cuentaAuxiliar.detallesAsiento,
-    { nullable: true },
-  )
-  @JoinColumn({ name: 'id_cuenta_auxiliar' })
-  cuentaAuxiliar: CuentaAuxiliar;
+  @ManyToOne(() => Empresa)
+  @JoinColumn({ name: 'id_empresa' })
+  empresa: Empresa;
 
-  // 4. FK: id_centro_costo (Desagregación, opcional)
-  @ManyToOne(
-    () => CentroCosto,
-    (centroCosto: CentroCosto) => centroCosto.detallesAsiento,
-    { nullable: true },
-  )
+  @ManyToOne(() => CentroCosto, { nullable: true })
   @JoinColumn({ name: 'id_centro_costo' })
   centroCosto: CentroCosto;
+
+  @ManyToOne(() => CuentaAuxiliar, { nullable: true })
+  @JoinColumn({ name: 'id_cuenta_auxiliar' })
+  cuentaAuxiliar: CuentaAuxiliar;
 }

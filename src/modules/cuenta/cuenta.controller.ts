@@ -1,86 +1,64 @@
 import {
   Controller,
-  Post,
-  Put,
-  Delete,
   Get,
+  Post,
   Body,
+  Put,
   Param,
+  Delete,
+  ParseIntPipe,
+  UseGuards,
   HttpCode,
   HttpStatus,
-  NotFoundException,
-  ParseIntPipe,
+  Query, // <-- Fundamental para el contexto de empresa
 } from '@nestjs/common';
 import { CuentaService } from './cuenta.service';
-import { CreateCuentaDto, UpdateCuentaDto } from './dto';
-import { Cuenta } from './cuenta.entity';
+import { CreateCuentaDto } from './dto';
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 
-@Controller('cuentas') // Ruta base: /api/v1/cuentas
+@UseGuards(JwtAuthGuard)
+@Controller('cuenta')
 export class CuentaController {
   constructor(private readonly cuentaService: CuentaService) {}
 
-  // --- 1. CREACIÓN (POST) ---
-  // POST /cuentas
+  @Get()
+  async findAll(@Query('id_empresa', ParseIntPipe) id_empresa: number) {
+    // Solo trae el plan de cuentas de la empresa seleccionada
+    return await this.cuentaService.findAll(id_empresa);
+  }
+
+  @Get(':id')
+  async findOne(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('id_empresa', ParseIntPipe) id_empresa: number,
+  ) {
+    // Valida que la cuenta exista y pertenezca a la empresa
+    return await this.cuentaService.findOne(id, id_empresa);
+  }
+
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  async create(@Body() createCuentaDto: CreateCuentaDto): Promise<Cuenta> {
-    // El servicio se encarga de la validación de las 4 FKs antes de guardar.
-    return this.cuentaService.postCuenta(createCuentaDto);
+  async create(@Body() dto: CreateCuentaDto) {
+    // El id_empresa debe venir dentro del JSON del body
+    return await this.cuentaService.create(dto);
   }
 
-  // --- 2. ACTUALIZACIÓN (PUT) ---
-  // PUT /cuentas/:id
   @Put(':id')
   async update(
-    @Param('id', ParseIntPipe) id_cuenta: number,
-    @Body() updateCuentaDto: UpdateCuentaDto,
-  ): Promise<Cuenta> {
-    // Llamar al servicio para actualizar la cuenta
-    const updatedCuenta = await this.cuentaService.putCuenta(
-      id_cuenta,
-      updateCuentaDto,
-    );
-
-    if (!updatedCuenta) {
-      throw new NotFoundException(`Cuenta con ID ${id_cuenta} no encontrada.`);
-    }
-
-    return updatedCuenta;
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: CreateCuentaDto,
+    @Query('id_empresa', ParseIntPipe) id_empresa: number,
+  ) {
+    // Asegura que no se edite una cuenta de otra empresa
+    return await this.cuentaService.update(id, dto, id_empresa);
   }
 
-  // --- 3. OBTENER TODAS LAS CUENTAS (GET ALL) ---
-  // GET /cuentas
-  @Get()
-  async findAll(): Promise<Cuenta[]> {
-    return this.cuentaService.getallCuenta();
-  }
-
-  // --- 4. OBTENER CUENTA POR ID (GET BY ID) ---
-  // GET /cuentas/:id
-  @Get(':id')
-  async findOne(@Param('id', ParseIntPipe) id_cuenta: number): Promise<Cuenta> {
-    const cuenta = await this.cuentaService.getCuentaById(id_cuenta);
-
-    if (!cuenta) {
-      throw new NotFoundException(`Cuenta con ID ${id_cuenta} no encontrada.`);
-    }
-    return cuenta;
-  }
-
-  // --- 5. ELIMINAR CUENTA (DELETE) ---
-  // DELETE /cuentas/:id
   @Delete(':id')
-  @HttpCode(HttpStatus.NO_CONTENT) // Retorna 204 No Content si es exitoso
-  async delete(@Param('id', ParseIntPipe) id_cuenta: number): Promise<void> {
-    const wasDeleted = await this.cuentaService.deleteCuenta(id_cuenta);
-
-    if (!wasDeleted) {
-      // Si la cuenta no se encontró, o si la base de datos impidió la eliminación (FK restrict)
-      // Aunque en el servicio ya se intenta eliminar, lanzamos 404 si el registro no existía.
-      // Si la eliminación falla por FK, NestJS lanzará una excepción 500 que puedes manejar con filtros.
-      throw new NotFoundException(
-        `Cuenta con ID ${id_cuenta} no encontrada o no pudo ser eliminada (posiblemente referenciada).`,
-      );
-    }
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async remove(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('id_empresa', ParseIntPipe) id_empresa: number,
+  ) {
+    return await this.cuentaService.remove(id, id_empresa);
   }
 }

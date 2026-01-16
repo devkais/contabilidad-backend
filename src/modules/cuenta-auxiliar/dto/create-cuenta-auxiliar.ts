@@ -1,19 +1,44 @@
-// src/cuenta-auxiliar/dto/create-cuenta-auxiliar.dto.ts
-import { IsString, IsNumber, IsBoolean, IsNotEmpty } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  MaxLength,
+  Min,
+} from 'class-validator';
 
 export class CreateCuentaAuxiliarDto {
-  @IsNotEmpty()
   @IsString()
+  @IsNotEmpty()
+  @MaxLength(50)
   codigo: string;
 
-  @IsNotEmpty()
   @IsString()
+  @IsNotEmpty()
+  @MaxLength(255)
   nombre: string;
 
-  @IsNotEmpty()
   @IsNumber()
-  id_empresa: number;
+  @Min(1)
+  nivel: number;
 
-  @IsBoolean()
-  activo: boolean;
+  @IsOptional()
+  @IsNumber()
+  id_padre?: number;
+
+  @IsNumber()
+  @IsNotEmpty()
+  id_empresa: number;
+}
+
+export class UpdateCuentaAuxiliarDto {
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  nombre?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(50)
+  codigo?: string;
 }

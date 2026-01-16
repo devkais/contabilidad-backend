@@ -1,7 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Gestion } from './gestion.entity';
 import { Repository } from 'typeorm';
+import { Gestion } from './gestion.entity';
 import { CreateGestionDto, UpdateGestionDto } from './dto';
 import { EmpresaService } from '../empresa/services/empresa.service';
 
@@ -13,75 +17,73 @@ export class GestionService {
     private readonly empresaService: EmpresaService,
   ) {}
 
-  // El servicio debe devolver la entidad, no el DTO directamente.
-  async getallGestion(): Promise<Gestion[]> {
-    return this.gestionRepository.find();
+  // Ahora findAll podría requerir id_empresa para no mostrar gestiones de otros
+  async findAll(id_empresa?: number): Promise<Gestion[]> {
+    return await this.gestionRepository.find({
+      where: id_empresa ? { id_empresa } : {},
+      relations: ['empresa'],
+    });
   }
 
-  async getGestionById(id_gestion: number): Promise<Gestion | null> {
+  async findByEmpresa(id_empresa: number): Promise<Gestion[]> {
+    return await this.gestionRepository.find({
+      where: { id_empresa },
+      order: { fecha_inicio: 'DESC' },
+    });
+  }
+
+  // ACTUALIZADO: Ahora recibe id_empresa para validar el contexto
+  async findOne(id: number, id_empresa: number): Promise<Gestion> {
     const gestion = await this.gestionRepository.findOne({
-      where: { id_gestion },
+      where: {
+        id_gestion: id,
+        id_empresa: id_empresa, // <--- Validamos que la gestión sea de la empresa
+      },
+      relations: ['empresa'],
     });
-    return gestion;
-  }
-  async postGestion(createGestionDto: CreateGestionDto): Promise<Gestion> {
-    // Cambiamos el retorno a la entidad Gestion
 
-    // Desestructurar el ID de la FK y el resto de los datos
-    const { id_empresa, ...rest } = createGestionDto;
-
-    // 1. Obtener la entidad Empresa completa
-    const empresa = await this.empresaService.getEmpresaById(id_empresa);
-
-    if (!empresa) {
+    if (!gestion)
       throw new NotFoundException(
-        `Empresa con ID ${id_empresa} no encontrada.`,
+        `Gestión con ID ${id} no encontrada en esta empresa`,
       );
-    }
 
-    // 2. Crear el objeto de Gestion, asignando la entidad Empresa
-    const gestionToCreate = this.gestionRepository.create({
-      ...rest, // Incluye nombre, fecha_inicio, fecha_fin, estado
-      empresa: empresa, // Asignar la entidad completa a la propiedad de relación
-    });
-
-    // 3. Guardar el nuevo registro
-    const gestion = await this.gestionRepository.save(gestionToCreate);
     return gestion;
   }
-  async putGestion(
-    id_gestion: number,
-    updateGestionDto: UpdateGestionDto,
-  ): Promise<Gestion | null> {
-    // Cambiamos el retorno a la entidad Gestion
 
-    // 1. Opcional: Verificar que la empresa existe si el ID está en el DTO
-    if (updateGestionDto.id_empresa) {
-      const empresaExistente = await this.empresaService.getEmpresaById(
-        updateGestionDto.id_empresa,
+  async create(dto: CreateGestionDto): Promise<Gestion> {
+    // 1. Validar que la empresa existe
+    await this.empresaService.findOne(dto.id_empresa);
+
+    // 2. Validar que fecha_inicio < fecha_fin
+    const inicio = new Date(dto.fecha_inicio);
+    const fin = new Date(dto.fecha_fin);
+    if (inicio >= fin) {
+      throw new BadRequestException(
+        'La fecha de inicio debe ser menor a la fecha de fin',
       );
-      if (!empresaExistente) {
-        throw new NotFoundException(
-          `Empresa con ID ${updateGestionDto.id_empresa} no encontrada para la actualización.`,
-        );
-      }
     }
 
-    // 2. Ejecutar la actualización con el DTO (estrategia sencilla)
-    const result = await this.gestionRepository.update(
-      { id_gestion },
-      updateGestionDto, // Pasamos el DTO de datos planos, sin usar .create()
-    );
-
-    if (!result.affected) {
-      return null;
-    }
-
-    return await this.getGestionById(id_gestion);
+    const nuevaGestion = this.gestionRepository.create({
+      ...dto,
+      fecha_inicio: inicio,
+      fecha_fin: fin,
+    });
+    return await this.gestionRepository.save(nuevaGestion);
   }
-  async deleteGestion(id_gestion: number): Promise<boolean> {
-    const result = await this.gestionRepository.delete({ id_gestion });
-    // Si result.affected es null o undefined, lo tratamos como 0.
-    return (result.affected ?? 0) > 0;
+
+  async update(
+    id: number,
+    dto: UpdateGestionDto,
+    id_empresa: number,
+  ): Promise<Gestion> {
+    const gestion = await this.findOne(id, id_empresa);
+    this.gestionRepository.merge(gestion, dto);
+    return await this.gestionRepository.save(gestion);
+  }
+
+  async remove(id: number, id_empresa: number): Promise<void> {
+    const gestion = await this.findOne(id, id_empresa);
+    // Validar si tiene asientos antes de borrar (opcional)
+    await this.gestionRepository.remove(gestion);
   }
 }
