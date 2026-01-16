@@ -7,6 +7,7 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { DetalleAsiento } from '../detalle-asiento/detalle-asiento.entity';
+import { Empresa } from '../empresa/empresa.entity';
 
 @Entity('centro_costo')
 export class CentroCosto {
@@ -25,6 +26,9 @@ export class CentroCosto {
   @Column({ name: 'id_padre', type: 'int', nullable: true })
   id_padre: number | null;
 
+  @Column({ name: 'id_empresa', type: 'int' })
+  id_empresa: number;
+
   // --- RELACIONES SEGÚN DBML ---
 
   @ManyToOne(() => CentroCosto, (cc) => cc.subcentros)
@@ -36,4 +40,8 @@ export class CentroCosto {
 
   @OneToMany(() => DetalleAsiento, (detalle) => detalle.centroCosto)
   detallesAsiento: DetalleAsiento[];
+
+  @ManyToOne(() => Empresa, (empresa) => empresa.centros_costo)
+  @JoinColumn({ name: 'id_empresa' })
+  empresa: Empresa;
 }

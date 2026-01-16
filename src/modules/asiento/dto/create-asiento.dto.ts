@@ -32,8 +32,8 @@ export class CreateAsientoDto {
   id_gestion: number;
 
   @IsNumber()
-  @IsOptional()
-  tc_oficial_asiento?: number;
+  @IsNotEmpty()
+  tc_oficial_asiento: number;
 
   @IsOptional()
   @IsString()
@@ -44,6 +44,10 @@ export class CreateAsientoDto {
   @IsString()
   @MaxLength(100)
   external_id?: string;
+
+  @IsNumber()
+  @IsNotEmpty()
+  id_empresa: number;
 }
 
 export class UpdateAsientoDto {

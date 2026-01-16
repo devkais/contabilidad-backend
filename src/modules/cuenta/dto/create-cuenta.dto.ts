@@ -40,6 +40,10 @@ export class CreateCuentaDto {
   @IsOptional()
   @IsBoolean()
   activo?: boolean;
+
+  @IsNumber()
+  @IsNotEmpty()
+  id_empresa: number;
 }
 
 export class UpdateCuentaDto {

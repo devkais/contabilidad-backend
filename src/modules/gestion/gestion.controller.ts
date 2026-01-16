@@ -10,6 +10,7 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  Query, // <-- Capturamos la empresa actual
 } from '@nestjs/common';
 import { GestionService } from './gestion.service';
 import { CreateGestionDto, UpdateGestionDto } from './dto';
@@ -21,8 +22,11 @@ export class GestionController {
   constructor(private readonly gestionService: GestionService) {}
 
   @Get()
-  async findAll() {
-    return await this.gestionService.findAll();
+  async findAll(@Query('id_empresa') id_empresa?: number) {
+    // Si se envía id_empresa, filtramos, si no, devolvemos según lógica del service
+    return await this.gestionService.findAll(
+      id_empresa ? Number(id_empresa) : undefined,
+    );
   }
 
   @Get('empresa/:id_empresa')
@@ -31,13 +35,17 @@ export class GestionController {
   }
 
   @Get(':id')
-  async findOne(@Param('id', ParseIntPipe) id: number) {
-    return await this.gestionService.findOne(id);
+  async findOne(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('id_empresa', ParseIntPipe) id_empresa: number, // <-- Contexto de empresa
+  ) {
+    return await this.gestionService.findOne(id, id_empresa);
   }
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
   async create(@Body() dto: CreateGestionDto) {
+    // El id_empresa ya viene en el DTO de creación
     return await this.gestionService.create(dto);
   }
 
@@ -45,13 +53,17 @@ export class GestionController {
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateGestionDto,
+    @Query('id_empresa', ParseIntPipe) id_empresa: number, // <-- Seguridad
   ) {
-    return await this.gestionService.update(id, dto);
+    return await this.gestionService.update(id, dto, id_empresa);
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async remove(@Param('id', ParseIntPipe) id: number) {
-    return await this.gestionService.remove(id);
+  async remove(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('id_empresa', ParseIntPipe) id_empresa: number, // <-- Seguridad
+  ) {
+    return await this.gestionService.remove(id, id_empresa);
   }
 }

@@ -25,6 +25,10 @@ export class CreateCuentaAuxiliarDto {
   @IsOptional()
   @IsNumber()
   id_padre?: number;
+
+  @IsNumber()
+  @IsNotEmpty()
+  id_empresa: number;
 }
 
 export class UpdateCuentaAuxiliarDto {

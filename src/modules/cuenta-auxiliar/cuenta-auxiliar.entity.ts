@@ -7,6 +7,7 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { DetalleAsiento } from '../detalle-asiento/detalle-asiento.entity';
+import { Empresa } from '../empresa/empresa.entity';
 
 @Entity('cuenta_auxiliar')
 export class CuentaAuxiliar {
@@ -25,6 +26,9 @@ export class CuentaAuxiliar {
   @Column({ name: 'id_padre', type: 'int', nullable: true })
   id_padre: number | null;
 
+  @Column({ name: 'id_empresa', type: 'int' })
+  id_empresa: number;
+
   // --- RELACIONES SEGÚN DBML ---
 
   @ManyToOne(() => CuentaAuxiliar, (ca) => ca.subauxiliares)
@@ -36,4 +40,8 @@ export class CuentaAuxiliar {
 
   @OneToMany(() => DetalleAsiento, (detalle) => detalle.cuentaAuxiliar)
   detallesAsiento: DetalleAsiento[];
+
+  @ManyToOne(() => Empresa, (empresa) => empresa.cuentas_auxiliares)
+  @JoinColumn({ name: 'id_empresa' })
+  empresa: Empresa;
 }

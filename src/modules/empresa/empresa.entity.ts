@@ -1,6 +1,10 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 import { Gestion } from '../gestion/gestion.entity';
 import { DetalleAsiento } from '../detalle-asiento/detalle-asiento.entity';
+import { Cuenta } from '../cuenta/cuenta.entity';
+import { Asiento } from '../asiento/asiento.entity';
+import { CentroCosto } from '../centro-costo/centro-costo.entity';
+import { CuentaAuxiliar } from '../cuenta-auxiliar/cuenta-auxiliar.entity';
 
 @Entity('empresa')
 export class Empresa {
@@ -25,4 +29,16 @@ export class Empresa {
 
   @OneToMany(() => DetalleAsiento, (detalle) => detalle.empresa)
   detallesAsiento: DetalleAsiento[];
+
+  @OneToMany(() => Cuenta, (cuenta) => cuenta.empresa)
+  cuentas: Cuenta[];
+
+  @OneToMany(() => Asiento, (asiento) => asiento.empresa)
+  asientos: Asiento[];
+
+  @OneToMany(() => CentroCosto, (cc) => cc.empresa)
+  centros_costo: CentroCosto[];
+
+  @OneToMany(() => CuentaAuxiliar, (aux) => aux.empresa)
+  cuentas_auxiliares: CuentaAuxiliar[];
 }

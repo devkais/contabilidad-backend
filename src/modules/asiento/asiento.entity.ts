@@ -10,6 +10,7 @@ import {
 import { Gestion } from '../gestion/gestion.entity';
 import { Usuario } from '../usuario/usuario.entity';
 import { DetalleAsiento } from '../detalle-asiento/detalle-asiento.entity';
+import { Empresa } from '../empresa/empresa.entity';
 
 @Entity('asiento')
 export class Asiento {
@@ -49,6 +50,12 @@ export class Asiento {
   @CreateDateColumn({ type: 'timestamp' })
   created_at: Date;
 
+  @Column({ name: 'id_empresa', type: 'int' })
+  id_empresa: number;
+
+  @ManyToOne(() => Empresa, (empresa) => empresa.asientos)
+  @JoinColumn({ name: 'id_empresa' })
+  empresa: Empresa;
   // --- RELACIONES ---
 
   @ManyToOne(() => Gestion, (gestion) => gestion.asientos)

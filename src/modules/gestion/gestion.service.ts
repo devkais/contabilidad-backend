@@ -17,8 +17,12 @@ export class GestionService {
     private readonly empresaService: EmpresaService,
   ) {}
 
-  async findAll(): Promise<Gestion[]> {
-    return await this.gestionRepository.find({ relations: ['empresa'] });
+  // Ahora findAll podría requerir id_empresa para no mostrar gestiones de otros
+  async findAll(id_empresa?: number): Promise<Gestion[]> {
+    return await this.gestionRepository.find({
+      where: id_empresa ? { id_empresa } : {},
+      relations: ['empresa'],
+    });
   }
 
   async findByEmpresa(id_empresa: number): Promise<Gestion[]> {
@@ -28,13 +32,21 @@ export class GestionService {
     });
   }
 
-  async findOne(id: number): Promise<Gestion> {
+  // ACTUALIZADO: Ahora recibe id_empresa para validar el contexto
+  async findOne(id: number, id_empresa: number): Promise<Gestion> {
     const gestion = await this.gestionRepository.findOne({
-      where: { id_gestion: id },
+      where: {
+        id_gestion: id,
+        id_empresa: id_empresa, // <--- Validamos que la gestión sea de la empresa
+      },
       relations: ['empresa'],
     });
+
     if (!gestion)
-      throw new NotFoundException(`Gestión con ID ${id} no encontrada`);
+      throw new NotFoundException(
+        `Gestión con ID ${id} no encontrada en esta empresa`,
+      );
+
     return gestion;
   }
 
@@ -51,9 +63,6 @@ export class GestionService {
       );
     }
 
-    // 3. Opcional: Validar que no existan traslapes de fechas para la misma empresa
-    // (Lógica de negocio adicional aquí si se requiere)
-
     const nuevaGestion = this.gestionRepository.create({
       ...dto,
       fecha_inicio: inicio,
@@ -62,15 +71,19 @@ export class GestionService {
     return await this.gestionRepository.save(nuevaGestion);
   }
 
-  async update(id: number, dto: UpdateGestionDto): Promise<Gestion> {
-    const gestion = await this.findOne(id);
+  async update(
+    id: number,
+    dto: UpdateGestionDto,
+    id_empresa: number,
+  ): Promise<Gestion> {
+    const gestion = await this.findOne(id, id_empresa);
     this.gestionRepository.merge(gestion, dto);
     return await this.gestionRepository.save(gestion);
   }
 
-  async remove(id: number): Promise<void> {
-    const gestion = await this.findOne(id);
-    // Aquí se debería validar si tiene asientos antes de borrar
+  async remove(id: number, id_empresa: number): Promise<void> {
+    const gestion = await this.findOne(id, id_empresa);
+    // Validar si tiene asientos antes de borrar (opcional)
     await this.gestionRepository.remove(gestion);
   }
 }

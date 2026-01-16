@@ -7,6 +7,7 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { Moneda } from '../moneda/moneda.entity';
+import { Empresa } from '../empresa/empresa.entity';
 
 @Entity('cuenta')
 export class Cuenta {
@@ -37,6 +38,9 @@ export class Cuenta {
   @Column({ type: 'boolean', default: true })
   activo: boolean;
 
+  @Column({ name: 'id_empresa', type: 'int' })
+  id_empresa: number;
+
   // --- RELACIONES SEGÚN DBML ---
 
   @ManyToOne(() => Cuenta, (cuenta) => cuenta.subcuentas)
@@ -49,4 +53,8 @@ export class Cuenta {
   @ManyToOne(() => Moneda, (moneda) => moneda.cuentas)
   @JoinColumn({ name: 'id_moneda' })
   moneda: Moneda;
+
+  @ManyToOne(() => Empresa, (empresa) => empresa.cuentas)
+  @JoinColumn({ name: 'id_empresa' })
+  empresa: Empresa;
 }

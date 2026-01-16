@@ -8,9 +8,10 @@ import {
   Param,
   ParseIntPipe,
   UseGuards,
+  Query, // <-- Necesario para capturar ?id_empresa=X
 } from '@nestjs/common';
 import { DetalleAsientoService } from './detalle-asiento.service';
-import { CreateDetalleAsientoDto, UpdateDetalleAsientoDto } from './dto';
+import { CreateDetalleAsientoDto } from './dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 
 @UseGuards(JwtAuthGuard)
@@ -20,24 +21,32 @@ export class DetalleAsientoController {
 
   @Post()
   async create(@Body() dto: CreateDetalleAsientoDto) {
+    // El id_empresa ya viene en el body para validar la cuenta en el service
     return await this.detalleService.postDetalle(dto);
   }
 
   @Get('asiento/:id')
-  async findByAsiento(@Param('id', ParseIntPipe) id: number) {
-    return await this.detalleService.getByAsiento(id);
+  async findByAsiento(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('id_empresa', ParseIntPipe) id_empresa: number, // <-- Candado de seguridad
+  ) {
+    return await this.detalleService.getByAsiento(id, id_empresa);
   }
 
   @Put(':id')
   async update(
     @Param('id', ParseIntPipe) id: number,
-    @Body() dto: UpdateDetalleAsientoDto,
+    @Body() dto: CreateDetalleAsientoDto,
+    @Query('id_empresa', ParseIntPipe) id_empresa: number, // <-- Candado de seguridad
   ) {
-    return await this.detalleService.putDetalle(id, dto);
+    return await this.detalleService.putDetalle(id, dto, id_empresa);
   }
 
   @Delete(':id')
-  async remove(@Param('id', ParseIntPipe) id: number) {
-    return await this.detalleService.deleteDetalle(id);
+  async remove(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('id_empresa', ParseIntPipe) id_empresa: number, // <-- Candado de seguridad
+  ) {
+    return await this.detalleService.deleteDetalle(id, id_empresa);
   }
 }

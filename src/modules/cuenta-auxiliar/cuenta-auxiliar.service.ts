@@ -15,36 +15,41 @@ export class CuentaAuxiliarService {
     private readonly caRepository: Repository<CuentaAuxiliar>,
   ) {}
 
-  async findAll(): Promise<CuentaAuxiliar[]> {
+  // Filtrar auxiliares por empresa seleccionada
+  async findAll(id_empresa: number): Promise<CuentaAuxiliar[]> {
     return await this.caRepository.find({
+      where: { id_empresa }, // <--- FILTRO DE EMPRESA
       relations: ['padre'],
       order: { codigo: 'ASC' },
     });
   }
 
-  async findOne(id: number): Promise<CuentaAuxiliar> {
+  // Buscar uno validando que pertenezca a la empresa
+  async findOne(id: number, id_empresa: number): Promise<CuentaAuxiliar> {
     const auxiliar = await this.caRepository.findOne({
-      where: { id_cuenta_auxiliar: id },
+      where: { id_cuenta_auxiliar: id, id_empresa }, // <--- FILTRO DE EMPRESA
       relations: ['padre', 'subauxiliares'],
     });
     if (!auxiliar)
-      throw new NotFoundException(`Cuenta auxiliar con ID ${id} no encontrada`);
+      throw new NotFoundException(
+        `Cuenta auxiliar con ID ${id} no encontrada en esta empresa`,
+      );
     return auxiliar;
   }
 
   async create(dto: CreateCuentaAuxiliarDto): Promise<CuentaAuxiliar> {
-    // 1. Validar Código Duplicado
+    // 1. Validar Código Duplicado DENTRO de la misma empresa
     const existe = await this.caRepository.findOne({
-      where: { codigo: dto.codigo },
+      where: { codigo: dto.codigo, id_empresa: dto.id_empresa },
     });
     if (existe)
       throw new BadRequestException(
-        `El código auxiliar ${dto.codigo} ya existe.`,
+        `El código auxiliar ${dto.codigo} ya existe en esta empresa.`,
       );
 
-    // 2. Validar Padre y Niveles
+    // 2. Validar Padre y Niveles (Asegurando mismo contexto de empresa)
     if (dto.id_padre) {
-      const padre = await this.findOne(dto.id_padre);
+      const padre = await this.findOne(dto.id_padre, dto.id_empresa); // <--- BUSCA PADRE EN LA MISMA EMPRESA
       if (dto.nivel !== padre.nivel + 1) {
         throw new BadRequestException(`El nivel debe ser ${padre.nivel + 1}`);
       }
@@ -59,14 +64,24 @@ export class CuentaAuxiliarService {
   async update(
     id: number,
     dto: UpdateCuentaAuxiliarDto,
+    id_empresa: number,
   ): Promise<CuentaAuxiliar> {
-    const auxiliar = await this.findOne(id);
+    const auxiliar = await this.findOne(id, id_empresa);
+
+    // Validar código si cambia
+    if (dto.codigo && dto.codigo !== auxiliar.codigo) {
+      const existe = await this.caRepository.findOne({
+        where: { codigo: dto.codigo, id_empresa },
+      });
+      if (existe) throw new BadRequestException('El código ya está en uso.');
+    }
+
     this.caRepository.merge(auxiliar, dto);
     return await this.caRepository.save(auxiliar);
   }
 
-  async remove(id: number): Promise<void> {
-    const auxiliar = await this.findOne(id);
+  async remove(id: number, id_empresa: number): Promise<void> {
+    const auxiliar = await this.findOne(id, id_empresa);
     if (auxiliar.subauxiliares && auxiliar.subauxiliares.length > 0) {
       throw new BadRequestException(
         'No se puede eliminar un auxiliar que tiene sub-niveles.',
