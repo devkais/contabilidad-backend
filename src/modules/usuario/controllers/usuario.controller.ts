@@ -15,7 +15,7 @@ import { CreateUsuarioDto, UpdateUsuarioDto } from '../dto';
 import { JwtAuthGuard } from '../../../auth/guards/jwt-auth.guard';
 import { Usuario } from '../usuario.entity';
 
-@UseGuards(JwtAuthGuard) // Protegemos el módulo
+//@UseGuards(JwtAuthGuard) // Protegemos el módulo
 @Controller('usuario')
 export class UsuarioController {
   constructor(private readonly usuarioService: UsuarioService) {}

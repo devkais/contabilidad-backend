@@ -1,7 +1,7 @@
 export class CentroCostoDto {
   id_centro_costo: number;
+  codigo: string;
   nombre: string;
-  simbolo: string;
   activo: boolean;
   id_empresa: number;
 }
