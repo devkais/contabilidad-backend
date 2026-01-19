@@ -24,6 +24,7 @@ import { BitacoraModule } from './modules/bitacora/bitacora.module';
 // Módulos de Transacción (Núcleo)
 import { AsientoModule } from './modules/asiento/asiento.module';
 import { DetalleAsientoModule } from './modules/detalle-asiento/detalle-asiento.module';
+import { UsuarioEmpresaModule } from './modules/usuario-empresa/usuario-empresa.module';
 
 @Module({
   imports: [
@@ -55,6 +56,7 @@ import { DetalleAsientoModule } from './modules/detalle-asiento/detalle-asiento.
     // 6. TRANSACCIÓN CENTRAL
     AsientoModule,
     DetalleAsientoModule,
+    UsuarioEmpresaModule,
   ],
 })
 export class AppModule {}

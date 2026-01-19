@@ -1,6 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 import { Asiento } from '../asiento/asiento.entity';
 import { Bitacora } from '../bitacora/bitacora.entity';
+import { UsuarioEmpresa } from '../usuario-empresa/usuario-empresa.entity';
 
 import { Exclude } from 'class-transformer';
 
@@ -28,6 +29,9 @@ export class Usuario {
 
   @OneToMany(() => Bitacora, (bitacora) => bitacora.usuario)
   bitacoras: Bitacora[];
+
+  @OneToMany(() => UsuarioEmpresa, (ue) => ue.usuario)
+  usuarioEmpresas: UsuarioEmpresa[];
 
   // --- COMPATIBILIDAD (DEPRECADO) ---
 }

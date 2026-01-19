@@ -5,6 +5,7 @@ import { Cuenta } from '../cuenta/cuenta.entity';
 import { Asiento } from '../asiento/asiento.entity';
 import { CentroCosto } from '../centro-costo/centro-costo.entity';
 import { CuentaAuxiliar } from '../cuenta-auxiliar/cuenta-auxiliar.entity';
+import { UsuarioEmpresa } from '../usuario-empresa/usuario-empresa.entity';
 
 @Entity('empresa')
 export class Empresa {
@@ -41,4 +42,7 @@ export class Empresa {
 
   @OneToMany(() => CuentaAuxiliar, (aux) => aux.empresa)
   cuentas_auxiliares: CuentaAuxiliar[];
+
+  @OneToMany(() => UsuarioEmpresa, (ue) => ue.empresa)
+  usuarioEmpresas: UsuarioEmpresa[];
 }

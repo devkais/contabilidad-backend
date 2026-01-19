@@ -31,6 +31,7 @@ export class JwtStrategy extends JwtStrategyBase {
     return {
       id_usuario: payload.sub,
       username: payload.username,
+      id_empresa: payload.id_empresa,
     };
   }
 }
