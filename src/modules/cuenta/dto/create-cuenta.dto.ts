@@ -11,12 +11,10 @@ import {
 export class CreateCuentaDto {
   @IsString()
   @IsNotEmpty()
-  @MaxLength(50)
   codigo: string;
 
   @IsString()
   @IsNotEmpty()
-  @MaxLength(255)
   nombre: string;
 
   @IsNumber()
@@ -24,25 +22,19 @@ export class CreateCuentaDto {
 
   @IsOptional()
   @IsNumber()
-  id_cuenta_padre?: number;
+  id_padre?: number; // Cambiado para coincidir con la entidad
 
   @IsNumber()
   id_moneda: number;
 
   @IsString()
-  @IsOptional()
-  @IsIn(['Activo', 'Pasivo', 'Patrimonio', 'Ingreso', 'Gasto'])
-  clase_cuenta?: string;
+  @IsIn(['Activo', 'Pasivo', 'Patrimonio', 'Ingreso', 'Gasto', 'Costo'])
+  tipo_cuenta: string; // Cambiado de clase_cuenta a tipo_cuenta
 
   @IsBoolean()
   es_movimiento: boolean;
 
-  @IsOptional()
-  @IsBoolean()
-  activo?: boolean;
-
   @IsNumber()
-  @IsNotEmpty()
   id_empresa: number;
 }
 

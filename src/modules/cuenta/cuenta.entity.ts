@@ -14,47 +14,47 @@ export class Cuenta {
   @PrimaryGeneratedColumn()
   id_cuenta: number;
 
-  @Column({ length: 50, nullable: false })
+  @Column({ length: 50 })
   codigo: string;
 
-  @Column({ length: 255, nullable: false })
+  @Column({ length: 255 })
   nombre: string;
 
-  @Column({ type: 'int', nullable: false })
+  @Column({ type: 'int' })
   nivel: number;
 
-  @Column({ name: 'id_cuenta_padre', type: 'int', nullable: true })
-  id_cuenta_padre: number | null;
-
-  @Column({ name: 'id_moneda', type: 'int', nullable: false })
+  @Column({ name: 'id_moneda', type: 'int' })
   id_moneda: number;
 
-  @Column({ length: 20, nullable: true })
-  clase_cuenta: string; // Activo, Pasivo, Patrimonio, Ingreso, Gasto
-
-  @Column({ type: 'boolean', nullable: false })
-  es_movimiento: boolean; // Solo nivel 5 puede transaccionar
+  @Column({ type: 'boolean', default: false })
+  es_movimiento: boolean;
 
   @Column({ type: 'boolean', default: true })
-  activo: boolean;
+  activa: boolean; // Usamos solo uno: 'activa'
 
   @Column({ name: 'id_empresa', type: 'int' })
   id_empresa: number;
 
-  // --- RELACIONES SEGÚN DBML ---
+  @Column({ name: 'tipo_cuenta' })
+  tipo_cuenta: string; // 'Activo', 'Pasivo', 'Patrimonio', 'Ingreso', 'Gasto'
 
-  @ManyToOne(() => Cuenta, (cuenta) => cuenta.subcuentas)
-  @JoinColumn({ name: 'id_cuenta_padre' })
-  padre: Cuenta;
+  @Column({ name: 'id_padre', type: 'int', nullable: true })
+  id_padre: number | null; // Consolidamos aquí id_cuenta_padre e id_padre
 
-  @OneToMany(() => Cuenta, (cuenta) => cuenta.padre)
-  subcuentas: Cuenta[];
+  // --- RELACIONES ---
 
-  @ManyToOne(() => Moneda, (moneda) => moneda.cuentas)
+  @ManyToOne(() => Moneda)
   @JoinColumn({ name: 'id_moneda' })
   moneda: Moneda;
 
-  @ManyToOne(() => Empresa, (empresa) => empresa.cuentas)
+  @ManyToOne(() => Empresa)
   @JoinColumn({ name: 'id_empresa' })
   empresa: Empresa;
+
+  @ManyToOne(() => Cuenta, (cuenta) => cuenta.hijos)
+  @JoinColumn({ name: 'id_padre' })
+  padre: Cuenta;
+
+  @OneToMany(() => Cuenta, (cuenta) => cuenta.padre)
+  hijos: Cuenta[];
 }

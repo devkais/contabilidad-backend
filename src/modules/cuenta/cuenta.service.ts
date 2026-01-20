@@ -53,8 +53,8 @@ export class CuentaService {
       );
 
     // 3. Validar Padre (si existe) y niveles dentro de la empresa
-    if (dto.id_cuenta_padre) {
-      const padre = await this.findOne(dto.id_cuenta_padre, dto.id_empresa); // <--- VALIDAR PADRE DE LA MISMA EMPRESA
+    if (dto.id_padre) {
+      const padre = await this.findOne(dto.id_padre, dto.id_empresa);
       if (padre.es_movimiento) {
         throw new BadRequestException(
           'No se puede crear una subcuenta bajo una cuenta de movimiento.',
@@ -92,8 +92,14 @@ export class CuentaService {
   }
 
   async remove(id: number, id_empresa: number): Promise<void> {
-    const cuenta = await this.findOne(id, id_empresa);
-    if (cuenta.subcuentas && cuenta.subcuentas.length > 0) {
+    const cuenta = await this.cuentaRepository.findOne({
+      where: { id_cuenta: id, id_empresa },
+      relations: ['hijos'], // <--- Usar 'hijos' que es el nombre en la entidad
+    });
+
+    if (!cuenta) throw new NotFoundException('Cuenta no encontrada');
+
+    if (cuenta.hijos && cuenta.hijos.length > 0) {
       throw new BadRequestException(
         'No se puede eliminar una cuenta que tiene subcuentas.',
       );
