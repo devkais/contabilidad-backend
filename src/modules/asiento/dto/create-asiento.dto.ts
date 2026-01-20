@@ -1,62 +1,32 @@
+// src/modules/asiento/dto/create-asiento.dto.ts
+import { Type } from 'class-transformer';
 import {
-  IsString,
-  IsNotEmpty,
-  IsDateString,
+  ValidateNested,
+  IsArray,
   IsNumber,
+  IsNotEmpty,
   IsOptional,
-  IsIn,
-  MaxLength,
 } from 'class-validator';
+import { CreateDetalleAsientoDto } from '../../detalle-asiento/dto/create-detalle-asiento.dto';
 
 export class CreateAsientoDto {
-  @IsDateString()
-  @IsNotEmpty()
-  fecha: string;
+  @IsNotEmpty() fecha: string;
+  @IsNotEmpty() numero_comprobante: string;
+  @IsNotEmpty() glosa_general: string;
+  @IsNotEmpty() tipo_asiento: string;
+  @IsNumber() id_gestion: number;
+  @IsNumber() id_empresa: number;
+  @IsNumber() tc_oficial_asiento: number;
 
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(100)
-  numero_comprobante: string;
+  @IsOptional() beneficiario?: string; // Nuevo
+  @IsOptional() cheque_nro?: string; // Nuevo
 
-  @IsString()
-  @IsNotEmpty()
-  glosa_general: string;
-
-  @IsString()
-  @IsNotEmpty()
-  @IsIn(['Ingreso', 'Egreso', 'Traspaso', 'Ajuste'])
-  tipo_asiento: string;
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateDetalleAsientoDto)
+  detalles: CreateDetalleAsientoDto[]; // Importante para creación atómica
 
   @IsNumber()
-  @IsNotEmpty()
-  id_gestion: number;
-
-  @IsNumber()
-  @IsNotEmpty()
-  tc_oficial_asiento: number;
-
   @IsOptional()
-  @IsString()
-  @MaxLength(50)
-  sistema_origen?: string;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(100)
-  external_id?: string;
-
-  @IsNumber()
-  @IsNotEmpty()
-  id_empresa: number;
-}
-
-export class UpdateAsientoDto {
-  @IsOptional()
-  @IsString()
-  glosa_general?: string;
-
-  @IsOptional()
-  @IsString()
-  @IsIn(['contabilizado', 'borrador', 'anulado'])
-  estado?: string;
+  tc_ufv_asiento: number;
 }
