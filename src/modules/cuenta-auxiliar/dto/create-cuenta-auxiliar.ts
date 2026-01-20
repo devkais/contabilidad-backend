@@ -30,15 +30,3 @@ export class CreateCuentaAuxiliarDto {
   @IsNotEmpty()
   id_empresa: number;
 }
-
-export class UpdateCuentaAuxiliarDto {
-  @IsOptional()
-  @IsString()
-  @MaxLength(255)
-  nombre?: string;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(50)
-  codigo?: string;
-}

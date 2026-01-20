@@ -13,11 +13,11 @@ import {
   Query, // <-- Importante para capturar ?id_empresa=X
 } from '@nestjs/common';
 import { CuentaAuxiliarService } from './cuenta-auxiliar.service';
-import { CreateCuentaAuxiliarDto } from './dto';
+import { CreateCuentaAuxiliarDto, UpdateCuentaAuxiliarDto } from './dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 
 @UseGuards(JwtAuthGuard)
-@Controller('cuenta-auxiliar')
+@Controller('cuenta_auxiliar')
 export class CuentaAuxiliarController {
   constructor(private readonly caService: CuentaAuxiliarService) {}
 
@@ -46,7 +46,7 @@ export class CuentaAuxiliarController {
   @Put(':id')
   async update(
     @Param('id', ParseIntPipe) id: number,
-    @Body() dto: CreateCuentaAuxiliarDto,
+    @Body() dto: UpdateCuentaAuxiliarDto,
     @Query('id_empresa', ParseIntPipe) id_empresa: number,
   ) {
     // Pasamos el id de empresa para validar que el usuario no edite algo ajeno

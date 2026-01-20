@@ -3,5 +3,7 @@ export class CuentaAuxiliarDto {
   codigo: string;
   nombre: string;
   id_empresa: number;
+  id_padre: number | null;
+  nivel: number;
   activo: boolean;
 }
