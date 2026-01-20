@@ -13,7 +13,7 @@ import {
   Query, // <-- Fundamental para el contexto de empresa
 } from '@nestjs/common';
 import { CuentaService } from './cuenta.service';
-import { CreateCuentaDto } from './dto';
+import { CreateCuentaDto, UpdateCuentaDto } from './dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 
 @UseGuards(JwtAuthGuard)
@@ -46,10 +46,9 @@ export class CuentaController {
   @Put(':id')
   async update(
     @Param('id', ParseIntPipe) id: number,
-    @Body() dto: CreateCuentaDto,
+    @Body() dto: UpdateCuentaDto, // <--- Debe ser el de cuentas
     @Query('id_empresa', ParseIntPipe) id_empresa: number,
   ) {
-    // Asegura que no se edite una cuenta de otra empresa
     return await this.cuentaService.update(id, dto, id_empresa);
   }
 

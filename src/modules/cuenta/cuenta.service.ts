@@ -6,7 +6,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Cuenta } from './cuenta.entity';
-import { CreateCuentaDto } from './dto';
+import { CreateCuentaDto, UpdateCuentaDto } from './dto';
 import { MonedaService } from '../moneda/moneda.service';
 
 @Injectable()
@@ -73,7 +73,7 @@ export class CuentaService {
 
   async update(
     id: number,
-    dto: CreateCuentaDto,
+    dto: UpdateCuentaDto,
     id_empresa: number,
   ): Promise<Cuenta> {
     const cuenta = await this.findOne(id, id_empresa);
