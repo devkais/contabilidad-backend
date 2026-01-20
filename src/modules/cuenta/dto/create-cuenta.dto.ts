@@ -7,6 +7,7 @@ import {
   MaxLength,
   IsIn,
 } from 'class-validator';
+import { PartialType } from '@nestjs/mapped-types';
 
 export class CreateCuentaDto {
   @IsString()
@@ -31,7 +32,7 @@ export class CreateCuentaDto {
 
   @IsString()
   @IsOptional()
-  @IsIn(['Activo', 'Pasivo', 'Patrimonio', 'Ingreso', 'Gasto'])
+  @IsIn(['ACTIVO', 'PASIVO', 'PATRIMONIO', 'INGRESO', 'GASTO'])
   clase_cuenta?: string;
 
   @IsBoolean()
@@ -44,19 +45,10 @@ export class CreateCuentaDto {
   @IsNumber()
   @IsNotEmpty()
   id_empresa: number;
+
+  @IsNumber()
+  @IsOptional()
+  id_gestion: number;
 }
 
-export class UpdateCuentaDto {
-  @IsOptional()
-  @IsString()
-  @MaxLength(255)
-  nombre?: string;
-
-  @IsOptional()
-  @IsBoolean()
-  activo?: boolean;
-
-  @IsOptional()
-  @IsString()
-  clase_cuenta?: string;
-}
+export class UpdateCuentaDto extends PartialType(CreateCuentaDto) {}
