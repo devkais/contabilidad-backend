@@ -68,4 +68,13 @@ export class Asiento {
 
   @OneToMany(() => DetalleAsiento, (detalle) => detalle.asiento)
   detalles: DetalleAsiento[];
+
+  @Column({ length: 255, nullable: true })
+  beneficiario: string;
+
+  @Column({ length: 50, nullable: true })
+  cheque_nro: string;
+
+  @Column({ type: 'decimal', precision: 18, scale: 6, nullable: true })
+  tc_ufv_asiento: number; // Para guardar la UFV del día del asiento
 }

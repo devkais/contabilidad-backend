@@ -4,7 +4,7 @@ import {
   IsNumber,
   IsOptional,
   MaxLength,
-  Min,
+  IsBoolean,
 } from 'class-validator';
 
 export class CreateCentroCostoDto {
@@ -19,26 +19,10 @@ export class CreateCentroCostoDto {
   nombre: string;
 
   @IsNumber()
-  @Min(1)
-  nivel: number;
-
-  @IsOptional()
-  @IsNumber()
-  id_padre?: number;
-
-  @IsNumber()
   @IsNotEmpty()
   id_empresa: number;
-}
 
-export class UpdateCentroCostoDto {
+  @IsBoolean()
   @IsOptional()
-  @IsString()
-  @MaxLength(255)
-  nombre?: string;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(50)
-  codigo?: string;
+  activo?: boolean;
 }

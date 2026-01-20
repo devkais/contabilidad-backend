@@ -2,27 +2,23 @@ import {
   IsString,
   IsNumber,
   IsOptional,
-  IsBoolean,
+  MaxLength,
   Min,
   Max,
+  IsBoolean,
 } from 'class-validator';
 
 export class UpdateCuentaAuxiliarDto {
   @IsOptional()
   @IsString()
+  @MaxLength(50)
   codigo?: string;
 
   @IsOptional()
   @IsString()
+  @MaxLength(255)
   nombre?: string;
 
-  @IsOptional()
-  @IsBoolean()
-  activo?: boolean;
-
-  /* ==========================================================================
-      CAMPOS PARA JERARQUÍA
-     ========================================================================== */
   @IsOptional()
   @IsNumber()
   id_padre?: number;
@@ -33,9 +29,7 @@ export class UpdateCuentaAuxiliarDto {
   @Max(5)
   nivel?: number;
 
-  // El id_empresa normalmente no debería cambiarse en un Update,
-  // pero lo dejamos como opcional por si el Front lo envía.
   @IsOptional()
-  @IsNumber()
-  id_empresa?: number;
+  @IsBoolean()
+  activo?: boolean;
 }

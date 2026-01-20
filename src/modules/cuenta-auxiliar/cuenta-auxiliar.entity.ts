@@ -29,8 +29,6 @@ export class CuentaAuxiliar {
   @Column({ name: 'id_empresa', type: 'int' })
   id_empresa: number;
 
-  // --- RELACIONES SEGÚN DBML ---
-
   @ManyToOne(() => CuentaAuxiliar, (ca) => ca.subauxiliares)
   @JoinColumn({ name: 'id_padre' })
   padre: CuentaAuxiliar;
@@ -38,10 +36,10 @@ export class CuentaAuxiliar {
   @OneToMany(() => CuentaAuxiliar, (ca) => ca.padre)
   subauxiliares: CuentaAuxiliar[];
 
-  @OneToMany(() => DetalleAsiento, (detalle) => detalle.cuentaAuxiliar)
-  detallesAsiento: DetalleAsiento[];
-
   @ManyToOne(() => Empresa, (empresa) => empresa.cuentas_auxiliares)
   @JoinColumn({ name: 'id_empresa' })
   empresa: Empresa;
+
+  @OneToMany(() => DetalleAsiento, (detalle) => detalle.cuentaAuxiliar)
+  detallesAsiento: DetalleAsiento[];
 }

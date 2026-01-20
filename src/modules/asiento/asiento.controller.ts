@@ -24,7 +24,7 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { GetUser } from '../../common/decorators/get-user.decorator';
 
 @UseGuards(JwtAuthGuard)
-@Controller('asientos')
+@Controller('asiento')
 export class AsientoController {
   constructor(private readonly asientoService: AsientoService) {}
 
