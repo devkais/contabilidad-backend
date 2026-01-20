@@ -49,6 +49,9 @@ export class DetalleAsiento {
   @Column({ length: 10, nullable: true })
   codigo_flujo: string;
 
+  @Column({ type: 'decimal', precision: 18, scale: 8, default: 0 })
+  monto_ufv: number; // monto_bs / tc_ufv_asiento
+
   // --- RELACIONES ---
 
   @ManyToOne(() => Asiento, (asiento) => asiento.detalles, {
