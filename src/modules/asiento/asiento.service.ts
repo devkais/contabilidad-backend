@@ -24,14 +24,13 @@ export class AsientoService {
 
   async getallAsiento(
     id_empresa: number,
-
     id_gestion: number,
   ): Promise<Asiento[]> {
     return await this.asientoRepository.find({
-      where: { id_empresa, id_gestion }, // <--- Solo los de esta empresa y gestión
-
-      relations: ['gestion'],
-
+      where: { id_empresa, id_gestion },
+      // AÑADIMOS 'detalles' y 'detalles.cuenta' para ver nombres de cuentas
+      // También puedes añadir 'detalles.centroCosto' si quieres verlo en la tabla
+      relations: ['gestion', 'detalles', 'detalles.cuenta'],
       order: { fecha: 'DESC' },
     });
   }

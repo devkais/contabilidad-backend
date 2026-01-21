@@ -8,7 +8,8 @@ import {
 
 export class CreateDetalleAsientoDto {
   @IsNumber()
-  id_asiento: number;
+  @IsOptional()
+  id_asiento?: number;
 
   @IsNumber()
   id_cuenta: number;
