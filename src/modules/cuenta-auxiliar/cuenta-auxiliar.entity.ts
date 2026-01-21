@@ -5,11 +5,13 @@ import {
   ManyToOne,
   OneToMany,
   JoinColumn,
+  Unique,
 } from 'typeorm';
 import { DetalleAsiento } from '../detalle-asiento/detalle-asiento.entity';
 import { Empresa } from '../empresa/empresa.entity';
 
 @Entity('cuenta_auxiliar')
+@Unique(['codigo', 'id_empresa'])
 export class CuentaAuxiliar {
   @PrimaryGeneratedColumn()
   id_cuenta_auxiliar: number;

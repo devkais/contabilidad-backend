@@ -27,6 +27,14 @@ export class CuentaAuxiliarController {
     return await this.caService.findAll(id_empresa);
   }
 
+  @Get('suggest-code')
+  async suggestCode(
+    @Query('id_empresa', ParseIntPipe) id_empresa: number,
+    @Query('id_padre') id_padre?: number,
+  ) {
+    return await this.caService.getSuggestNextCode(id_empresa, id_padre);
+  }
+
   @Get(':id')
   async findOne(
     @Param('id', ParseIntPipe) id: number,
