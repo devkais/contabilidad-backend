@@ -68,7 +68,7 @@ export class DetalleAsiento {
   @JoinColumn({ name: 'id_empresa' })
   empresa: Empresa;
 
-  @ManyToOne(() => CentroCosto, { nullable: true })
+  @ManyToOne(() => CentroCosto)
   @JoinColumn({ name: 'id_centro_costo' })
   centroCosto: CentroCosto;
 

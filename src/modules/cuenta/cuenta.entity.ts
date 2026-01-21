@@ -35,8 +35,8 @@ export class Cuenta {
   @Column({ name: 'id_empresa', type: 'int' })
   id_empresa: number;
 
-  @Column({ name: 'tipo_cuenta' })
-  tipo_cuenta: string; // 'Activo', 'Pasivo', 'Patrimonio', 'Ingreso', 'Gasto'
+  @Column({ name: 'tipo_cuenta', length: 50, nullable: true })
+  tipo_cuenta: string;
 
   @Column({ name: 'id_padre', type: 'int', nullable: true })
   id_padre: number | null; // Consolidamos aquí id_cuenta_padre e id_padre

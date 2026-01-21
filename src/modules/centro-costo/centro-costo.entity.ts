@@ -4,8 +4,10 @@ import {
   Column,
   ManyToOne,
   JoinColumn,
+  OneToMany, // <-- Asegúrate de importar esto
 } from 'typeorm';
 import { Empresa } from '../empresa/empresa.entity';
+import { DetalleAsiento } from '../detalle-asiento/detalle-asiento.entity';
 
 @Entity('centro_costo')
 export class CentroCosto {
@@ -27,4 +29,11 @@ export class CentroCosto {
   @ManyToOne(() => Empresa)
   @JoinColumn({ name: 'id_empresa' })
   empresa: Empresa;
+
+  // Para solucionar el error de "any", especifica el tipo explícitamente en la función
+  @OneToMany(
+    () => DetalleAsiento,
+    (detalle: DetalleAsiento) => detalle.centroCosto,
+  )
+  detalles: DetalleAsiento[];
 }

@@ -1,8 +1,6 @@
 import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { ReportesService } from './reportes.service';
-import { ConsultarBalanceDto } from './dto/consultar-balance.dto';
 import { ConsultarResultadosDto } from './dto/consultar-resultados.dto';
-import { ConsultarMayorDto } from './dto/consultar-mayor.dto'; // Similar a los anteriores
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 
 @Controller('reportes')
@@ -11,10 +9,14 @@ export class ReportesController {
   constructor(private readonly reportesService: ReportesService) {}
 
   @Get('balance-general')
-  async getBalance(@Query() query: ConsultarBalanceDto) {
-    return this.reportesService.generarBalanceGeneral(
-      query.id_empresa,
-      query.fecha_corte,
+  async getBalance(
+    @Query('id_empresa') id_empresa: number,
+    @Query('fecha_corte') fecha_corte: string,
+  ) {
+    // Esto llamará a la lógica recursiva que ya corregimos
+    return await this.reportesService.generarBalanceGeneral(
+      id_empresa,
+      fecha_corte,
     );
   }
 
@@ -28,12 +30,17 @@ export class ReportesController {
   }
 
   @Get('libro-mayor')
-  async getMayor(@Query() query: ConsultarMayorDto) {
-    return this.reportesService.generarLibroMayor(
-      query.id_empresa,
-      query.id_cuenta,
-      query.fecha_inicio,
-      query.fecha_fin,
+  async getLibroMayor(
+    @Query('id_empresa') id_empresa: number,
+    @Query('id_cuenta') id_cuenta: number,
+    @Query('fecha_inicio') fecha_inicio: string,
+    @Query('fecha_fin') fecha_fin: string,
+  ) {
+    return await this.reportesService.generarLibroMayor(
+      Number(id_empresa),
+      Number(id_cuenta),
+      fecha_inicio,
+      fecha_fin,
     );
   }
 }
