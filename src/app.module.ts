@@ -26,6 +26,8 @@ import { AsientoModule } from './modules/asiento/asiento.module';
 import { DetalleAsientoModule } from './modules/detalle-asiento/detalle-asiento.module';
 import { UsuarioEmpresaModule } from './modules/usuario-empresa/usuario-empresa.module';
 
+import { ReportesModule } from './modules/reportes/reportes.module';
+
 @Module({
   imports: [
     // 1. CARGA GLOBAL DE VARIABLES DE ENTORNO
@@ -57,6 +59,8 @@ import { UsuarioEmpresaModule } from './modules/usuario-empresa/usuario-empresa.
     AsientoModule,
     DetalleAsientoModule,
     UsuarioEmpresaModule,
+
+    ReportesModule,
   ],
 })
 export class AppModule {}
