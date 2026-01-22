@@ -18,6 +18,10 @@ export class CreateAsientoDto {
   @IsNumber() id_empresa: number;
   @IsNumber() tc_oficial_asiento: number;
 
+  @IsNumber()
+  @IsOptional()
+  created_by: number;
+
   @IsOptional() beneficiario?: string; // Nuevo
   @IsOptional() cheque_nro?: string; // Nuevo
 

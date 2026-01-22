@@ -70,16 +70,6 @@ export class AsientoService {
         `El asiento no está cuadrado. Diferencia: ${sumaDebe - sumaHaber}`,
       );
     }
-    if (!dto.tc_ufv_asiento) {
-      try {
-        const tasa = await this.tasaCambioService.getTasaByFecha(dto.fecha);
-        dto.tc_ufv_asiento = tasa.cotizacion_ufv;
-      } catch (error) {
-        throw new BadRequestException(
-          'No existe cotización UFV para esta fecha. Regístrela primero.',
-        );
-      }
-    }
 
     const queryRunner =
       this.asientoRepository.manager.connection.createQueryRunner();

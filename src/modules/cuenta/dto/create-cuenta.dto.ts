@@ -4,7 +4,6 @@ import {
   IsNumber,
   IsBoolean,
   IsOptional,
-  MaxLength,
   IsIn,
 } from 'class-validator';
 import { PartialType } from '@nestjs/mapped-types';
