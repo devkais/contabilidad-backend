@@ -39,7 +39,7 @@ export class CreateCuentaDto {
 
   @IsString()
   @IsNotEmpty()
-  @IsIn(['Activo', 'Pasivo', 'Patrimonio', 'Ingreso', 'Gasto', 'Costo'])
+  @IsIn(['ACTIVO', 'PASIVO', 'PATRIMONIO', 'INGRESO', 'GASTO', 'COSTO']) // <-- Cámbialo a MAYÚSCULAS
   clase_cuenta: string;
 
   @IsBoolean()

@@ -55,7 +55,7 @@ export class CuentaService {
   ): Promise<Cuenta[]> {
     return await this.cuentaRepository.find({
       where: { id_empresa: idEmpresa, id_gestion: idGestion },
-      relations: ['moneda', 'id_cuenta_padre'],
+      relations: ['moneda', 'padre'],
       order: { codigo: 'ASC' },
     });
   }

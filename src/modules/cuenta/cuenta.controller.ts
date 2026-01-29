@@ -29,13 +29,12 @@ export class CuentaController {
 
   @Get()
   async findAll(@GetUser() user: UserRequest) {
-    // Solo el plan de cuentas de la empresa/gestión actual
+    console.log('Usuario en Controller:', user); // <--- Mira si aquí llegan los IDs
     return await this.cuentaService.findAllByContext(
       user.id_empresa,
       user.id_gestion,
     );
   }
-
   @Get(':id')
   async findOne(
     @Param('id', ParseIntPipe) id: number,
