@@ -6,84 +6,58 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Gestion } from './gestion.entity';
-import { CreateGestionDto, UpdateGestionDto } from './dto';
-import { EmpresaService } from '../empresa/services/empresa.service';
+import { CreateGestionDto } from './dto/gestion.dto';
 
 @Injectable()
 export class GestionService {
   constructor(
     @InjectRepository(Gestion)
     private readonly gestionRepository: Repository<Gestion>,
-    private readonly empresaService: EmpresaService,
   ) {}
 
-  // Ahora findAll podría requerir id_empresa para no mostrar gestiones de otros
-  async findAll(id_empresa?: number): Promise<Gestion[]> {
-    return await this.gestionRepository.find({
-      where: id_empresa ? { id_empresa } : {},
-      relations: ['empresa'],
-    });
+  async create(createGestionDto: CreateGestionDto): Promise<Gestion> {
+    // 1. Validar que la fecha fin no sea menor a la de inicio
+    if (
+      new Date(createGestionDto.fecha_fin) <=
+      new Date(createGestionDto.fecha_inicio)
+    ) {
+      throw new BadRequestException(
+        'La fecha de fin debe ser posterior a la de inicio',
+      );
+    }
+
+    // 2. Opcional: Validar que no haya solapamiento de fechas en la misma empresa
+    // (Lógica de negocio contable importante)
+
+    const nuevaGestion = this.gestionRepository.create(createGestionDto);
+    return await this.gestionRepository.save(nuevaGestion);
   }
 
-  async findByEmpresa(id_empresa: number): Promise<Gestion[]> {
+  async findAllByEmpresa(idEmpresa: number): Promise<Gestion[]> {
     return await this.gestionRepository.find({
-      where: { id_empresa },
+      where: { id_empresa: idEmpresa },
       order: { fecha_inicio: 'DESC' },
     });
   }
 
-  // ACTUALIZADO: Ahora recibe id_empresa para validar el contexto
-  async findOne(id: number, id_empresa: number): Promise<Gestion> {
+  async findOne(id: number, idEmpresa: number): Promise<Gestion> {
     const gestion = await this.gestionRepository.findOne({
-      where: {
-        id_gestion: id,
-        id_empresa: id_empresa, // <--- Validamos que la gestión sea de la empresa
-      },
-      relations: ['empresa'],
+      where: { id_gestion: id, id_empresa: idEmpresa },
     });
 
-    if (!gestion)
-      throw new NotFoundException(
-        `Gestión con ID ${id} no encontrada en esta empresa`,
-      );
-
+    if (!gestion) {
+      throw new NotFoundException('Gestión no encontrada en esta empresa');
+    }
     return gestion;
   }
 
-  async create(dto: CreateGestionDto): Promise<Gestion> {
-    // 1. Validar que la empresa existe
-    await this.empresaService.findOne(dto.id_empresa);
-
-    // 2. Validar que fecha_inicio < fecha_fin
-    const inicio = new Date(dto.fecha_inicio);
-    const fin = new Date(dto.fecha_fin);
-    if (inicio >= fin) {
-      throw new BadRequestException(
-        'La fecha de inicio debe ser menor a la fecha de fin',
-      );
-    }
-
-    const nuevaGestion = this.gestionRepository.create({
-      ...dto,
-      fecha_inicio: inicio,
-      fecha_fin: fin,
+  /**
+   * Verifica si una gestión está abierta para permitir transacciones.
+   */
+  async isGestionAbierta(id: number): Promise<boolean> {
+    const gestion = await this.gestionRepository.findOne({
+      where: { id_gestion: id },
     });
-    return await this.gestionRepository.save(nuevaGestion);
-  }
-
-  async update(
-    id: number,
-    dto: UpdateGestionDto,
-    id_empresa: number,
-  ): Promise<Gestion> {
-    const gestion = await this.findOne(id, id_empresa);
-    this.gestionRepository.merge(gestion, dto);
-    return await this.gestionRepository.save(gestion);
-  }
-
-  async remove(id: number, id_empresa: number): Promise<void> {
-    const gestion = await this.findOne(id, id_empresa);
-    // Validar si tiene asientos antes de borrar (opcional)
-    await this.gestionRepository.remove(gestion);
+    return gestion?.estado === 'abierto';
   }
 }

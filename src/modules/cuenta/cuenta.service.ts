@@ -1,109 +1,84 @@
 import {
   Injectable,
-  NotFoundException,
   BadRequestException,
+  ConflictException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Cuenta } from './cuenta.entity';
-import { CreateCuentaDto, UpdateCuentaDto } from './dto';
-import { MonedaService } from '../moneda/moneda.service';
+import { CreateCuentaDto } from './dto/cuenta.dto';
 
 @Injectable()
 export class CuentaService {
   constructor(
     @InjectRepository(Cuenta)
     private readonly cuentaRepository: Repository<Cuenta>,
-    private readonly monedaService: MonedaService,
   ) {}
 
-  // Ahora filtramos el Plan de Cuentas por Empresa
-  async findAll(id_empresa: number): Promise<Cuenta[]> {
-    return await this.cuentaRepository.find({
-      where: { id_empresa }, // <--- FILTRO VITAL
-      relations: ['moneda', 'padre'],
-      order: { codigo: 'ASC' },
-    });
-  }
-
-  // Buscamos la cuenta asegurando que pertenece a la empresa actual
-  async findOne(id: number, id_empresa: number): Promise<Cuenta> {
-    const cuenta = await this.cuentaRepository.findOne({
-      where: { id_cuenta: id, id_empresa }, // <--- FILTRO VITAL
-      relations: ['moneda', 'padre', 'subcuentas'],
-    });
-    if (!cuenta)
-      throw new NotFoundException(
-        `Cuenta con ID ${id} no encontrada en esta empresa`,
-      );
-    return cuenta;
-  }
-
   async create(dto: CreateCuentaDto): Promise<Cuenta> {
-    // 1. Validar Moneda (La moneda suele ser global, no necesita id_empresa)
-    await this.monedaService.findOne(dto.id_moneda);
+    const { id_empresa, id_gestion, id_cuenta_padre, codigo } = dto;
 
-    // 2. Validar Código Duplicado SOLO dentro de esta empresa
+    // 1. Evitar códigos duplicados en la misma gestión
     const existe = await this.cuentaRepository.findOne({
-      where: { codigo: dto.codigo, id_empresa: dto.id_empresa }, // <--- AJUSTE
+      where: { codigo, id_empresa, id_gestion },
     });
     if (existe)
-      throw new BadRequestException(
-        `El código ${dto.codigo} ya está en uso en esta empresa.`,
-      );
+      throw new ConflictException(`El código de cuenta ${codigo} ya existe.`);
 
-    // 3. Validar Padre (si existe) y niveles dentro de la empresa
-    if (dto.id_padre) {
-      const padre = await this.findOne(dto.id_padre, dto.id_empresa);
+    // 2. Lógica de Niveles y Jerarquía
+    if (id_cuenta_padre) {
+      const padre = await this.cuentaRepository.findOne({
+        where: { id_cuenta: id_cuenta_padre, id_empresa },
+      });
+
+      if (!padre) throw new BadRequestException('La cuenta padre no existe.');
       if (padre.es_movimiento) {
         throw new BadRequestException(
-          'No se puede crear una subcuenta bajo una cuenta de movimiento.',
+          'No se puede colgar una cuenta de una que ya es de movimiento.',
         );
       }
-      if (dto.nivel !== padre.nivel + 1) {
-        throw new BadRequestException(`El nivel debe ser ${padre.nivel + 1}`);
-      }
-    } else if (dto.nivel !== 1) {
-      throw new BadRequestException('Una cuenta sin padre debe ser nivel 1.');
+
+      // El nivel debe ser el del padre + 1
+      dto.nivel = padre.nivel + 1;
+    } else {
+      // Si no tiene padre, es nivel 1 (Activo, Pasivo, etc.)
+      dto.nivel = 1;
     }
 
     const nuevaCuenta = this.cuentaRepository.create(dto);
     return await this.cuentaRepository.save(nuevaCuenta);
   }
 
-  async update(
-    id: number,
-    dto: UpdateCuentaDto,
-    id_empresa: number,
-  ): Promise<Cuenta> {
-    const cuenta = await this.findOne(id, id_empresa);
-
-    // Validar duplicado si está cambiando el código
-    if (dto.codigo && dto.codigo !== cuenta.codigo) {
-      const existe = await this.cuentaRepository.findOne({
-        where: { codigo: dto.codigo, id_empresa },
-      });
-      if (existe)
-        throw new BadRequestException(`El código ${dto.codigo} ya existe.`);
-    }
-
-    this.cuentaRepository.merge(cuenta, dto);
-    return await this.cuentaRepository.save(cuenta);
+  async findAllByContext(
+    idEmpresa: number,
+    idGestion: number,
+  ): Promise<Cuenta[]> {
+    return await this.cuentaRepository.find({
+      where: { id_empresa: idEmpresa, id_gestion: idGestion },
+      relations: ['moneda', 'id_cuenta_padre'],
+      order: { codigo: 'ASC' },
+    });
   }
 
-  async remove(id: number, id_empresa: number): Promise<void> {
+  /**
+   * Método crítico para el AsientoService:
+   * Solo permite obtener cuentas que acepten movimientos.
+   */
+  async findMovimientoOnly(id: number, idEmpresa: number): Promise<Cuenta> {
     const cuenta = await this.cuentaRepository.findOne({
-      where: { id_cuenta: id, id_empresa },
-      relations: ['hijos'], // <--- Usar 'hijos' que es el nombre en la entidad
+      where: {
+        id_cuenta: id,
+        id_empresa: idEmpresa,
+        es_movimiento: true,
+        activo: true,
+      },
     });
 
-    if (!cuenta) throw new NotFoundException('Cuenta no encontrada');
-
-    if (cuenta.hijos && cuenta.hijos.length > 0) {
+    if (!cuenta) {
       throw new BadRequestException(
-        'No se puede eliminar una cuenta que tiene subcuentas.',
+        'La cuenta no es de movimiento, está inactiva o no existe.',
       );
     }
-    await this.cuentaRepository.remove(cuenta);
+    return cuenta;
   }
 }

@@ -1,5 +1,4 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
-import { TipoCambio } from '../tipo-cambio/tipo-cambio.entity';
 import { Cuenta } from '../cuenta/cuenta.entity';
 
 @Entity('moneda')
@@ -17,8 +16,6 @@ export class Moneda {
   simbolo: string;
 
   // Relaciones según DBML
-  @OneToMany(() => TipoCambio, (tc) => tc.monedaDestino)
-  tiposCambio: TipoCambio[];
 
   @OneToMany(() => Cuenta, (cuenta) => cuenta.moneda)
   cuentas: Cuenta[];

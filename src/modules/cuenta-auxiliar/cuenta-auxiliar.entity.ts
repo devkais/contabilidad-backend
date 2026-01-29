@@ -5,16 +5,23 @@ import {
   ManyToOne,
   OneToMany,
   JoinColumn,
-  Unique,
 } from 'typeorm';
-import { DetalleAsiento } from '../detalle-asiento/detalle-asiento.entity';
 import { Empresa } from '../empresa/empresa.entity';
+import { Gestion } from '../gestion/gestion.entity';
 
 @Entity('cuenta_auxiliar')
-@Unique(['codigo', 'id_empresa'])
 export class CuentaAuxiliar {
-  @PrimaryGeneratedColumn()
+  @PrimaryGeneratedColumn({ name: 'id_cuenta_auxiliar' })
   id_cuenta_auxiliar: number;
+
+  @Column({ name: 'id_empresa', type: 'int', nullable: false })
+  id_empresa: number;
+
+  @Column({ name: 'id_gestion', type: 'int', nullable: false })
+  id_gestion: number;
+
+  @Column({ name: 'id_padre', type: 'int', nullable: true })
+  id_padre: number | null;
 
   @Column({ length: 50, nullable: false })
   codigo: string;
@@ -25,23 +32,22 @@ export class CuentaAuxiliar {
   @Column({ type: 'int', nullable: false })
   nivel: number;
 
-  @Column({ name: 'id_padre', type: 'int', nullable: true })
-  id_padre: number | null;
+  @Column({ type: 'boolean', default: true })
+  activo: boolean;
 
-  @Column({ name: 'id_empresa', type: 'int' })
-  id_empresa: number;
-
-  @ManyToOne(() => CuentaAuxiliar, (ca) => ca.subauxiliares)
+  // RELACIONES
+  @ManyToOne(() => CuentaAuxiliar, (aux) => aux.sub_auxiliares)
   @JoinColumn({ name: 'id_padre' })
   padre: CuentaAuxiliar;
 
-  @OneToMany(() => CuentaAuxiliar, (ca) => ca.padre)
-  subauxiliares: CuentaAuxiliar[];
+  @OneToMany(() => CuentaAuxiliar, (aux) => aux.padre)
+  sub_auxiliares: CuentaAuxiliar[];
 
-  @ManyToOne(() => Empresa, (empresa) => empresa.cuentas_auxiliares)
+  @ManyToOne(() => Empresa)
   @JoinColumn({ name: 'id_empresa' })
   empresa: Empresa;
 
-  @OneToMany(() => DetalleAsiento, (detalle) => detalle.cuentaAuxiliar)
-  detallesAsiento: DetalleAsiento[];
+  @ManyToOne(() => Gestion)
+  @JoinColumn({ name: 'id_gestion' })
+  gestion: Gestion;
 }

@@ -1,37 +1,28 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
+import { UsuarioEmpresaGestion } from '../usuario-empresa-gestion/usuario-empresa-gestion.entity';
 import { Asiento } from '../asiento/asiento.entity';
-import { Bitacora } from '../bitacora/bitacora.entity';
-import { UsuarioEmpresa } from '../usuario-empresa/usuario-empresa.entity';
-
-import { Exclude } from 'class-transformer';
 
 @Entity('usuario')
 export class Usuario {
-  @PrimaryGeneratedColumn()
+  @PrimaryGeneratedColumn({ name: 'id_usuario' })
   id_usuario: number;
 
-  @Column({ length: 50, unique: true })
+  @Column({ length: 100, nullable: false })
+  nombre: string;
+
+  @Column({ length: 100, unique: true }) // Cambiado de email a username
   username: string;
 
-  @Exclude()
-  @Column({ length: 255 })
-  password: string;
-
-  @Column({ name: 'nombre_completo', length: 100, nullable: true })
-  nombre_completo: string;
+  @Column({ name: 'contrasena_hash', length: 255, nullable: false })
+  contrasenaHash: string;
 
   @Column({ type: 'boolean', default: true })
   activo: boolean;
 
-  // --- RELACIONES ---
-  @OneToMany(() => Asiento, (asiento) => asiento.created_by)
+  // RELACIONES
+  @OneToMany(() => UsuarioEmpresaGestion, (ueg) => ueg.usuario)
+  accesoGestiones: UsuarioEmpresaGestion[];
+
+  @OneToMany(() => Asiento, (asiento) => asiento.usuario)
   asientosCreados: Asiento[];
-
-  @OneToMany(() => Bitacora, (bitacora) => bitacora.usuario)
-  bitacoras: Bitacora[];
-
-  @OneToMany(() => UsuarioEmpresa, (ue) => ue.usuario)
-  usuarioEmpresas: UsuarioEmpresa[];
-
-  // --- COMPATIBILIDAD (DEPRECADO) ---
 }

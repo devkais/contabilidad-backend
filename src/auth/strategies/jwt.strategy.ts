@@ -1,29 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
-import { Strategy } from 'passport-jwt';
-import { Request } from 'express';
+import { ExtractJwt, Strategy } from 'passport-jwt';
 import { JwtPayload, UserRequest } from '../interfaces/auth.interface';
 
-// Forzamos a que el linter reconozca Strategy como un constructor válido
-const JwtStrategyBase = PassportStrategy(Strategy as any);
-
 @Injectable()
-export class JwtStrategy extends JwtStrategyBase {
+export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor() {
     super({
-      jwtFromRequest: (req: Request): string | null => {
-        const authHeader = req.headers?.authorization;
-        if (
-          authHeader &&
-          typeof authHeader === 'string' &&
-          authHeader.startsWith('Bearer ')
-        ) {
-          return authHeader.substring(7);
-        }
-        return null;
-      },
+      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: 'TU_LLAVE_SECRETA_SUPER_SEGURA',
+      secretOrKey: 'TU_LLAVE_SECRETA_SUPER_SEGURA', // Mover a .env después
     });
   }
 
@@ -32,6 +18,7 @@ export class JwtStrategy extends JwtStrategyBase {
       id_usuario: payload.sub,
       username: payload.username,
       id_empresa: payload.id_empresa,
+      id_gestion: payload.id_gestion,
     };
   }
 }

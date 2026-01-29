@@ -3,22 +3,24 @@ import {
   Get,
   Post,
   Body,
-  Put,
+  Patch,
   Param,
-  Delete,
   ParseIntPipe,
   UseGuards,
-  HttpCode,
-  HttpStatus,
 } from '@nestjs/common';
 import { MonedaService } from './moneda.service';
-import { CreateMonedaDto, UpdateMonedaDto } from './dto';
+import { CreateMonedaDto, UpdateMonedaDto } from './dto/moneda.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 
-@UseGuards(JwtAuthGuard)
-@Controller('moneda')
+@Controller('monedas')
+@UseGuards(JwtAuthGuard) // Solo usuarios logueados pueden gestionar monedas
 export class MonedaController {
   constructor(private readonly monedaService: MonedaService) {}
+
+  @Post()
+  async create(@Body() createMonedaDto: CreateMonedaDto) {
+    return await this.monedaService.create(createMonedaDto);
+  }
 
   @Get()
   async findAll() {
@@ -30,23 +32,11 @@ export class MonedaController {
     return await this.monedaService.findOne(id);
   }
 
-  @Post()
-  @HttpCode(HttpStatus.CREATED)
-  async create(@Body() createMonedaDto: CreateMonedaDto) {
-    return await this.monedaService.create(createMonedaDto);
-  }
-
-  @Put(':id')
+  @Patch(':id')
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateMonedaDto: UpdateMonedaDto,
   ) {
     return await this.monedaService.update(id, updateMonedaDto);
-  }
-
-  @Delete(':id')
-  @HttpCode(HttpStatus.NO_CONTENT)
-  async remove(@Param('id', ParseIntPipe) id: number): Promise<void> {
-    await this.monedaService.remove(id);
   }
 }

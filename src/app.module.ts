@@ -24,7 +24,7 @@ import { BitacoraModule } from './modules/bitacora/bitacora.module';
 // Módulos de Transacción (Núcleo)
 import { AsientoModule } from './modules/asiento/asiento.module';
 import { DetalleAsientoModule } from './modules/detalle-asiento/detalle-asiento.module';
-import { UsuarioEmpresaModule } from './modules/usuario-empresa/usuario-empresa.module';
+import { UsuarioEmpresaGestionModule } from './modules/usuario-empresa-gestion/usuario-empresa-gestion.module';
 
 import { ReportesModule } from './modules/reportes/reportes.module';
 
@@ -58,7 +58,7 @@ import { ReportesModule } from './modules/reportes/reportes.module';
     // 6. TRANSACCIÓN CENTRAL
     AsientoModule,
     DetalleAsientoModule,
-    UsuarioEmpresaModule,
+    UsuarioEmpresaGestionModule,
 
     ReportesModule,
   ],

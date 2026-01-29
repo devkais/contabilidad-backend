@@ -3,70 +3,46 @@ import {
   Get,
   Post,
   Body,
-  Put,
   Param,
-  Delete,
   ParseIntPipe,
   UseGuards,
-  HttpCode,
-  HttpStatus,
-  Query, // <-- Importante para capturar ?id_empresa=X
 } from '@nestjs/common';
 import { CuentaAuxiliarService } from './cuenta-auxiliar.service';
-import { CreateCuentaAuxiliarDto, UpdateCuentaAuxiliarDto } from './dto';
+import { CreateCuentaAuxiliarDto } from './dto/cuenta-auxiliar.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { EmpresaGestionGuard } from '../../auth/guards/empresa-gestion.guard';
+import { GetUser } from '../../common/decorators/get-user.decorator';
+import type { UserRequest } from '../../auth/interfaces/auth.interface';
 
-@UseGuards(JwtAuthGuard)
-@Controller('cuenta_auxiliar')
+@Controller('cuentas-auxiliares')
+@UseGuards(JwtAuthGuard, EmpresaGestionGuard)
 export class CuentaAuxiliarController {
-  constructor(private readonly caService: CuentaAuxiliarService) {}
+  constructor(private readonly auxiliarService: CuentaAuxiliarService) {}
 
-  @Get()
-  async findAll(@Query('id_empresa', ParseIntPipe) id_empresa: number) {
-    // Pasamos el id_empresa al servicio para filtrar
-    return await this.caService.findAll(id_empresa);
+  @Post()
+  async create(
+    @Body() dto: CreateCuentaAuxiliarDto,
+    @GetUser() user: UserRequest,
+  ) {
+    // Blindamos los IDs de empresa y gestión desde el token/guard
+    dto.id_empresa = user.id_empresa;
+    dto.id_gestion = user.id_gestion;
+    return await this.auxiliarService.create(dto);
   }
 
-  @Get('suggest-code')
-  async suggestCode(
-    @Query('id_empresa', ParseIntPipe) id_empresa: number,
-    @Query('id_padre') id_padre?: number,
-  ) {
-    return await this.caService.getSuggestNextCode(id_empresa, id_padre);
+  @Get()
+  async findAll(@GetUser() user: UserRequest) {
+    return await this.auxiliarService.findAllByContext(
+      user.id_empresa,
+      user.id_gestion,
+    );
   }
 
   @Get(':id')
   async findOne(
     @Param('id', ParseIntPipe) id: number,
-    @Query('id_empresa', ParseIntPipe) id_empresa: number,
+    @GetUser() user: UserRequest,
   ) {
-    // Validamos que el auxiliar pertenezca a la empresa
-    return await this.caService.findOne(id, id_empresa);
-  }
-
-  @Post()
-  @HttpCode(HttpStatus.CREATED)
-  async create(@Body() dto: CreateCuentaAuxiliarDto) {
-    // El id_empresa ya viene dentro del Body (CreateCuentaAuxiliarDto)
-    return await this.caService.create(dto);
-  }
-
-  @Put(':id')
-  async update(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() dto: UpdateCuentaAuxiliarDto,
-    @Query('id_empresa', ParseIntPipe) id_empresa: number,
-  ) {
-    // Pasamos el id de empresa para validar que el usuario no edite algo ajeno
-    return await this.caService.update(id, dto, id_empresa);
-  }
-
-  @Delete(':id')
-  @HttpCode(HttpStatus.NO_CONTENT)
-  async remove(
-    @Param('id', ParseIntPipe) id: number,
-    @Query('id_empresa', ParseIntPipe) id_empresa: number,
-  ) {
-    return await this.caService.remove(id, id_empresa);
+    return await this.auxiliarService.findOne(id, user.id_empresa);
   }
 }

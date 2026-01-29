@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
+import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -27,6 +28,8 @@ async function bootstrap() {
       transform: true, // Convierte tipos (ej. string a number en params)
     }),
   );
+
+  app.useGlobalInterceptors(new TransformInterceptor());
 
   const PORT = process.env.PORT || 3000;
   await app.listen(PORT);

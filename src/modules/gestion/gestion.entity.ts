@@ -3,11 +3,9 @@ import {
   PrimaryGeneratedColumn,
   Column,
   ManyToOne,
-  OneToMany,
   JoinColumn,
 } from 'typeorm';
 import { Empresa } from '../empresa/empresa.entity';
-import { Asiento } from '../asiento/asiento.entity';
 
 @Entity('gestion')
 export class Gestion {
@@ -33,7 +31,4 @@ export class Gestion {
   @ManyToOne(() => Empresa, (empresa) => empresa.gestiones)
   @JoinColumn({ name: 'id_empresa' })
   empresa: Empresa;
-
-  @OneToMany(() => Asiento, (asiento) => asiento.gestion)
-  asientos: Asiento[];
 }

@@ -11,11 +11,8 @@ import { Empresa } from '../empresa/empresa.entity';
 
 @Entity('bitacora')
 export class Bitacora {
-  @PrimaryGeneratedColumn()
+  @PrimaryGeneratedColumn({ name: 'id_bitacora' })
   id_bitacora: number;
-
-  @CreateDateColumn({ type: 'timestamp' })
-  fecha_hora: Date;
 
   @Column({ name: 'id_usuario', type: 'int', nullable: false })
   id_usuario: number;
@@ -23,26 +20,28 @@ export class Bitacora {
   @Column({ name: 'id_empresa', type: 'int', nullable: false })
   id_empresa: number;
 
-  @Column({ length: 20, nullable: false })
-  accion: string; // INSERT, UPDATE, DELETE, ANULAR, IMPORT
-
   @Column({ length: 50, nullable: false })
-  modulo_origen: string; // CONTABILIDAD, VENTAS_API, etc.
+  accion: string; // INSERT, UPDATE, DELETE, LOGIN
 
-  @Column({ length: 50, nullable: false })
+  @Column({ name: 'modulo_origen', length: 50, nullable: false })
+  modulo_origen: string; // ASIENTOS, CUENTAS, etc.
+
+  @Column({ name: 'tabla_afectada', length: 50, nullable: false })
   tabla_afectada: string;
 
-  @Column({ type: 'int', nullable: false })
+  @Column({ name: 'id_registro_afectado', type: 'int', nullable: false })
   id_registro_afectado: number;
 
-  @Column({ type: 'json', nullable: true })
-  detalle_cambio: Record<string, unknown>; // Mapeo explícito en lugar de any
+  @CreateDateColumn({ name: 'fecha_hora', type: 'timestamp' })
+  fecha_hora: Date;
 
-  @Column({ length: 50, nullable: true })
+  @Column({ name: 'ip_maquina', length: 50, nullable: true })
   ip_maquina: string;
 
-  // --- RELACIONES ---
+  @Column({ name: 'detalle_cambio', type: 'json', nullable: true })
+  detalle_cambio: any; // Aquí guardamos el objeto con los cambios
 
+  // RELACIONES
   @ManyToOne(() => Usuario)
   @JoinColumn({ name: 'id_usuario' })
   usuario: Usuario;

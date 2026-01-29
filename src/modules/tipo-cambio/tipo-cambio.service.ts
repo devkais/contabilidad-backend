@@ -4,71 +4,76 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, LessThanOrEqual } from 'typeorm';
 import { TipoCambio } from './tipo-cambio.entity';
-import { CreateTipoCambioDto, UpdateTipoCambioDto } from './dto';
-import { MonedaService } from '../moneda/moneda.service';
+import { CreateTipoCambioDto } from './dto/tipo-cambio.dto';
+import { MathUtil } from '../../common/utils/math.util';
 
 @Injectable()
 export class TipoCambioService {
   constructor(
     @InjectRepository(TipoCambio)
     private readonly tcRepository: Repository<TipoCambio>,
-    private readonly monedaService: MonedaService,
   ) {}
 
-  async findAll(): Promise<TipoCambio[]> {
-    return await this.tcRepository.find({
-      relations: ['monedaDestino'],
-      order: { fecha: 'DESC' },
-    });
-  }
-
-  async findByFecha(fecha: string): Promise<TipoCambio[]> {
-    return await this.tcRepository.find({
-      where: { fecha: new Date(fecha) },
-      relations: ['monedaDestino'],
-    });
-  }
-
   async create(dto: CreateTipoCambioDto): Promise<TipoCambio> {
-    // Validar que la moneda existe
-    await this.monedaService.findOne(dto.id_moneda_destino);
-
-    // Evitar duplicados de fecha y moneda
+    const fechaBusqueda = new Date(dto.fecha);
+    // 1. Validar que no exista ya un TC para esa fecha y moneda
     const existe = await this.tcRepository.findOne({
       where: {
-        fecha: new Date(dto.fecha),
         id_moneda_destino: dto.id_moneda_destino,
+        fecha: fechaBusqueda,
       },
     });
 
     if (existe) {
       throw new BadRequestException(
-        'Ya existe un tipo de cambio para esta fecha y moneda.',
+        `Ya existe un tipo de cambio para la fecha ${dto.fecha}`,
       );
     }
 
+    // 2. Aplicar redondeo de precisión a 6 decimales con nuestra utilitaria
     const nuevoTc = this.tcRepository.create({
       ...dto,
-      fecha: new Date(dto.fecha),
+      oficial: MathUtil.roundExchangeRate(dto.oficial),
+      venta: dto.venta ? MathUtil.roundExchangeRate(dto.venta) : undefined,
+      compra: dto.compra ? MathUtil.roundExchangeRate(dto.compra) : undefined,
     });
+
     return await this.tcRepository.save(nuevoTc);
   }
 
-  async update(id: number, dto: UpdateTipoCambioDto): Promise<TipoCambio> {
+  /**
+   * Obtiene el tipo de cambio vigente para una fecha.
+   * Si no hay para la fecha exacta, busca el último disponible hacia atrás.
+   */
+  async getVigente(
+    idMoneda: number,
+    fecha: string | Date,
+  ): Promise<TipoCambio> {
+    const fechaDate = typeof fecha === 'string' ? new Date(fecha) : fecha;
     const tc = await this.tcRepository.findOne({
-      where: { id_tipo_cambio: id },
+      where: {
+        id_moneda_destino: idMoneda,
+        fecha: LessThanOrEqual(fechaDate),
+      },
+      order: { fecha: 'DESC' },
     });
-    if (!tc) throw new NotFoundException('Tipo de cambio no encontrado');
 
-    this.tcRepository.merge(tc, dto);
-    return await this.tcRepository.save(tc);
+    if (!tc) {
+      throw new NotFoundException(
+        `No hay tipo de cambio registrado para la moneda ${idMoneda} en la fecha ${fechaDate.toISOString().split('T')[0]}`,
+      );
+    }
+
+    return tc;
   }
 
-  async remove(id: number): Promise<void> {
-    const result = await this.tcRepository.delete(id);
-    if (result.affected === 0)
-      throw new NotFoundException('Tipo de cambio no encontrado');
+  async findAll(): Promise<TipoCambio[]> {
+    return await this.tcRepository.find({
+      relations: ['moneda'],
+      order: { fecha: 'DESC' },
+      take: 30, // Retornamos los últimos 30 por defecto
+    });
   }
 }

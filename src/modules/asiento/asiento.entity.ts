@@ -5,76 +5,84 @@ import {
   ManyToOne,
   OneToMany,
   JoinColumn,
-  CreateDateColumn,
 } from 'typeorm';
+import { Empresa } from '../empresa/empresa.entity';
 import { Gestion } from '../gestion/gestion.entity';
 import { Usuario } from '../usuario/usuario.entity';
 import { DetalleAsiento } from '../detalle-asiento/detalle-asiento.entity';
-import { Empresa } from '../empresa/empresa.entity';
 
 @Entity('asiento')
 export class Asiento {
-  @PrimaryGeneratedColumn()
+  @PrimaryGeneratedColumn({ name: 'id_asiento' })
   id_asiento: number;
-
-  @Column({ type: 'date', nullable: false })
-  fecha: Date;
-
-  @Column({ length: 100, nullable: false })
-  numero_comprobante: string;
-
-  @Column({ type: 'text', nullable: false })
-  glosa_general: string;
-
-  @Column({ length: 20, nullable: false })
-  tipo_asiento: string; // Ingreso, Egreso, Traspaso, Ajuste
-
-  @Column({ length: 20, default: 'contabilizado' })
-  estado: string; // borrador, contabilizado, anulado
-
-  @Column({ name: 'id_gestion', type: 'int', nullable: false })
-  id_gestion: number;
-
-  @Column({ name: 'created_by', type: 'int', nullable: false })
-  created_by: number;
-
-  @Column({ type: 'decimal', precision: 18, scale: 6, nullable: true })
-  tc_oficial_asiento: number;
-
-  @Column({ length: 50, default: 'MANUAL' })
-  sistema_origen: string;
-
-  @Column({ length: 100, nullable: true })
-  external_id: string;
-
-  @CreateDateColumn({ type: 'timestamp' })
-  created_at: Date;
 
   @Column({ name: 'id_empresa', type: 'int' })
   id_empresa: number;
 
-  @ManyToOne(() => Empresa, (empresa) => empresa.asientos)
-  @JoinColumn({ name: 'id_empresa' })
-  empresa: Empresa;
+  @Column({ name: 'id_gestion', type: 'int' })
+  id_gestion: number;
+
+  @Column({ name: 'created_by', type: 'int' })
+  created_by: number;
+
+  @Column({ name: 'reversion_de', type: 'int', nullable: true })
+  reversion_de: number | null;
+
+  @Column({ type: 'date' })
+  fecha: Date;
+
+  @Column({ name: 'numero_comprobante', length: 100 })
+  numero_comprobante: string;
+
+  @Column({ type: 'text' })
+  glosa_general: string;
+
+  @Column({ name: 'tipo_asiento', length: 20 })
+  tipo_asiento: string; // INGRESO, EGRESO, TRASPASO, AJUSTE
+
+  @Column({ length: 20, default: 'contabilizado' })
+  estado: string; // CONTABILIZADO, ANULADO, REVERTIDO
+
+  @Column({
+    name: 'tc_oficial_asiento',
+    type: 'decimal',
+    precision: 18,
+    scale: 6,
+  })
+  tc_oficial_asiento: number;
+
+  @Column({
+    name: 'tc_ufv_asiento',
+    type: 'decimal',
+    precision: 18,
+    scale: 6,
+    nullable: true,
+  })
+  tc_ufv_asiento: number;
+
+  @Column({ name: 'sistema_origen', length: 50, default: 'MANUAL' })
+  sistema_origen: string;
+
   // --- RELACIONES ---
 
-  @ManyToOne(() => Gestion, (gestion) => gestion.asientos)
+  @ManyToOne(() => Empresa)
+  @JoinColumn({ name: 'id_empresa' })
+  empresa: Empresa;
+
+  @ManyToOne(() => Gestion)
   @JoinColumn({ name: 'id_gestion' })
   gestion: Gestion;
 
   @ManyToOne(() => Usuario)
   @JoinColumn({ name: 'created_by' })
-  usuario_creador: Usuario;
+  usuario: Usuario;
 
-  @OneToMany(() => DetalleAsiento, (detalle) => detalle.asiento)
+  @OneToMany(() => DetalleAsiento, (detalle) => detalle.asiento, {
+    cascade: true,
+  })
   detalles: DetalleAsiento[];
 
-  @Column({ length: 255, nullable: true })
-  beneficiario: string;
-
-  @Column({ length: 50, nullable: true })
-  cheque_nro: string;
-
-  @Column({ type: 'decimal', precision: 18, scale: 6, nullable: true })
-  tc_ufv_asiento: number; // Para guardar la UFV del día del asiento
+  @ManyToOne(() => Asiento)
+  @JoinColumn({ name: 'reversion_de' })
+  asientoOriginal: Asiento;
 }

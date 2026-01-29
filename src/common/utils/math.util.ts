@@ -1,37 +1,25 @@
 export class MathUtil {
-  /**
-   * Redondea montos de dinero (BS/SUS) a 2 decimales exactos.
-   * Utilizado para DEBE, HABER y saldos de cuentas.
-   */
-  static roundMoney(value: number): number {
-    return Math.round((value + Number.EPSILON) * 100) / 100;
+  // Para montos en registros (Libros, Balances)
+  static roundMoney(value: number | string): number {
+    const num = typeof value === 'string' ? parseFloat(value) : value;
+    // Usamos el factor de precisión para evitar errores de coma flotante de JS
+    return Number(Math.round(Number(num + 'e2')) + 'e-2');
   }
 
-  /**
-   * Redondea tipos de cambio a 6 decimales exactos.
-   * Ajustado a la definición del DBML: decimal(18, 6).
-   */
-  static roundExchangeRate(value: number): number {
-    const factor = 1_000_000;
-    return Math.round((value + Number.EPSILON) * factor) / factor;
+  // Para tipos de cambio (Bolivia exige 6 decimales para TC oficial)
+  static roundExchangeRate(value: number | string): number {
+    const num = typeof value === 'string' ? parseFloat(value) : value;
+    return Number(Math.round(Number(num + 'e6')) + 'e-6');
   }
 
-  /**
-   * Verifica la doble partida (Diferencia mínima aceptable).
-   * Compara que la suma de Debes y Haberes sea igual.
-   */
   static isBalanced(debe: number, haber: number): boolean {
-    // Usamos una constante de error pequeña para evitar problemas de precisión
-    return Math.abs(this.roundMoney(debe) - this.roundMoney(haber)) < 0.01;
+    // En contabilidad empresarial, la diferencia debe ser CERO absoluto tras redondear
+    const diff = Math.abs(this.roundMoney(debe) - this.roundMoney(haber));
+    return diff < 0.001; // Margen menor a un centavo
   }
 
-  /**
-   * Calcula la conversión de moneda con la precisión requerida.
-   * @param monto Monto en moneda origen
-   * @param tc Tipo de cambio (6 decimales)
-   */
   static convert(monto: number, tc: number): number {
-    const resultado = monto * tc;
-    return this.roundMoney(resultado);
+    // Calculamos con toda la precisión y solo redondeamos al final para el guardado
+    return this.roundMoney(monto * tc);
   }
 }

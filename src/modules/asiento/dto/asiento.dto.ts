@@ -1,15 +1,60 @@
-export class AsientoDto {
-  fecha: string;
-  numero_comprobante: string;
-  glosa: string;
-  tipo_asiento: string;
-  estado: string; // Aunque tiene default 'valido', lo pedimos para control
-  tipo_cambio_usd: number;
-  tipo_cambio_ufv: number;
-  // --- LLAVES FORÁNEAS OBLIGATORIAS ---
+import {
+  IsString,
+  IsNotEmpty,
+  IsNumber,
+  IsDateString,
+  IsOptional,
+  IsArray,
+  ValidateNested,
+  IsIn,
+} from 'class-validator';
+import { Type } from 'class-transformer';
+import { PartialType } from '@nestjs/mapped-types';
+import { CreateDetalleAsientoDto } from '../../detalle-asiento/dto/detalle-asiento.dto';
+
+export class CreateAsientoDto {
+  @IsNumber()
+  @IsNotEmpty()
   id_empresa: number;
+
+  @IsNumber()
+  @IsNotEmpty()
   id_gestion: number;
+
+  @IsNumber()
+  @IsNotEmpty()
   created_by: number;
-  // --- LLAVE FORÁNEA RECURSIVA (OPCIONAL) ---
-  reversion_de?: number | null;
+
+  @IsDateString()
+  @IsNotEmpty()
+  fecha: string;
+
+  @IsString()
+  @IsNotEmpty()
+  numero_comprobante: string;
+
+  @IsString()
+  @IsNotEmpty()
+  glosa_general: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @IsIn(['INGRESO', 'EGRESO', 'TRASPASO', 'AJUSTE'])
+  tipo_asiento: string;
+
+  @IsNumber({ maxDecimalPlaces: 6 })
+  @IsNotEmpty()
+  tc_oficial_asiento: number;
+
+  @IsNumber({ maxDecimalPlaces: 6 })
+  @IsOptional()
+  tc_ufv_asiento?: number;
+
+  // VALIDACIÓN ANIDADA
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateDetalleAsientoDto)
+  detalles: CreateDetalleAsientoDto[];
 }
+
+export class UpdateAsientoDto extends PartialType(CreateAsientoDto) {}

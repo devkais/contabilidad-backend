@@ -1,30 +1,59 @@
-// src/detalle-asiento/dto/detalle-asiento.dto.ts
+import {
+  IsNumber,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  Min,
+} from 'class-validator';
 
-import { CuentaAuxiliarDto } from '../../cuenta-auxiliar/dto/cuenta-auxiliar.dto';
-import { CentroCostoDto } from '../../centro-costo/dto/centro-costo.dto';
-
-// DTOs simplificados para evitar recursión innecesaria
-class AsientoSimpleDto {
-  id_asiento: number;
-  fecha: string;
-}
-
-class CuentaSimpleDto {
+export class CreateDetalleAsientoDto {
+  @IsNumber()
+  @IsNotEmpty()
   id_cuenta: number;
-  codigo: string;
-  nombre: string;
-}
 
-export class DetalleAsientoDto {
-  id_detalle: number;
+  @IsNumber()
+  @IsNotEmpty()
+  id_empresa: number;
 
-  tipo_mov_debe_haber_bs: number;
-  tipo_mov_debe_haber_usd: number;
-  tipo_mov_debe_haber_ufv: number;
+  @IsNumber()
+  @IsNotEmpty()
+  id_gestion: number;
 
-  // --- Relaciones Anidadas ---
-  asiento: AsientoSimpleDto;
-  cuenta: CuentaSimpleDto;
-  cuentaAuxiliar: CuentaAuxiliarDto | null;
-  centroCosto: CentroCostoDto | null;
+  @IsNumber()
+  @IsOptional()
+  id_centro_costo?: number;
+
+  @IsNumber()
+  @IsOptional()
+  id_cuenta_auxiliar?: number;
+
+  @IsString()
+  @IsOptional()
+  glosa_detalle?: string;
+
+  // Montos en Bolivianos
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
+  debe_bs: number;
+
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
+  haber_bs: number;
+
+  // Montos en Dólares (opcionales si el sistema los calcula)
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @IsOptional()
+  debe_sus?: number;
+
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @IsOptional()
+  haber_sus?: number;
+
+  @IsNumber({ maxDecimalPlaces: 8 })
+  @IsOptional()
+  monto_ufv?: number;
+
+  @IsString()
+  @IsOptional()
+  codigo_flujo?: string;
 }

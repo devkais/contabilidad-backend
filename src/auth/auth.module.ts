@@ -5,12 +5,12 @@ import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { UsuarioModule } from '../modules/usuario/usuario.module';
 import { JwtStrategy } from './strategies/jwt.strategy';
-import { UsuarioEmpresaModule } from '../modules/usuario-empresa/usuario-empresa.module';
+import { UsuarioEmpresaGestionModule } from '../modules/usuario-empresa-gestion/usuario-empresa-gestion.module';
 
 @Module({
   imports: [
     UsuarioModule, // Necesario para acceder al UsuarioService
-    UsuarioEmpresaModule, // Necesario para acceder al UsuarioEmpresaService
+    UsuarioEmpresaGestionModule, // Necesario para acceder al UsuarioEmpresaGestionService
     PassportModule,
     JwtModule.register({
       secret: 'TU_LLAVE_SECRETA_SUPER_SEGURA', // En el futuro irá en el .env

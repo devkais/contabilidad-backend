@@ -4,36 +4,36 @@ import {
   Column,
   ManyToOne,
   JoinColumn,
-  OneToMany, // <-- Asegúrate de importar esto
 } from 'typeorm';
 import { Empresa } from '../empresa/empresa.entity';
-import { DetalleAsiento } from '../detalle-asiento/detalle-asiento.entity';
+import { Gestion } from '../gestion/gestion.entity';
 
 @Entity('centro_costo')
 export class CentroCosto {
-  @PrimaryGeneratedColumn()
+  @PrimaryGeneratedColumn({ name: 'id_centro_costo' })
   id_centro_costo: number;
 
-  @Column({ length: 50 })
-  codigo: string;
-
-  @Column({ length: 255 })
-  nombre: string;
-
-  @Column({ name: 'id_empresa', type: 'int' })
+  @Column({ name: 'id_empresa', type: 'int', nullable: false })
   id_empresa: number;
 
-  @Column({ default: true })
+  @Column({ name: 'id_gestion', type: 'int', nullable: false })
+  id_gestion: number;
+
+  @Column({ length: 50, nullable: false })
+  codigo: string;
+
+  @Column({ length: 255, nullable: false })
+  nombre: string;
+
+  @Column({ type: 'boolean', default: true })
   activo: boolean;
 
+  // RELACIONES
   @ManyToOne(() => Empresa)
   @JoinColumn({ name: 'id_empresa' })
   empresa: Empresa;
 
-  // Para solucionar el error de "any", especifica el tipo explícitamente en la función
-  @OneToMany(
-    () => DetalleAsiento,
-    (detalle: DetalleAsiento) => detalle.centroCosto,
-  )
-  detalles: DetalleAsiento[];
+  @ManyToOne(() => Gestion)
+  @JoinColumn({ name: 'id_gestion' })
+  gestion: Gestion;
 }

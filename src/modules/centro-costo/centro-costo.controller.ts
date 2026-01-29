@@ -3,51 +3,60 @@ import {
   Get,
   Post,
   Body,
-  Put,
+  Patch,
   Param,
-  Delete,
   ParseIntPipe,
   UseGuards,
-  HttpCode,
-  HttpStatus,
-  Query, // <-- Capturamos el contexto de empresa
 } from '@nestjs/common';
 import { CentroCostoService } from './centro-costo.service';
-import { CreateCentroCostoDto } from './dto';
+import {
+  CreateCentroCostoDto,
+  UpdateCentroCostoDto,
+} from './dto/centro-costo.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
-import { UpdateCentroCostoDto } from './dto/update-centro-costo.dto';
+import { EmpresaGestionGuard } from '../../auth/guards/empresa-gestion.guard';
+import { GetUser } from '../../common/decorators/get-user.decorator';
+import type { UserRequest } from '../../auth/interfaces/auth.interface';
 
-@Controller('centro-costo')
-@UseGuards(JwtAuthGuard)
-@Controller('centro-costo') // <-- Verifica que el frontend use esta ruta
+@Controller('centro-costos')
+@UseGuards(JwtAuthGuard, EmpresaGestionGuard) // Doble capa de seguridad
 export class CentroCostoController {
   constructor(private readonly ccService: CentroCostoService) {}
 
-  @Get()
-  findAll(@Query('id_empresa', ParseIntPipe) id_empresa: number) {
-    return this.ccService.findAll(id_empresa);
-  }
-
   @Post()
-  create(@Body() dto: CreateCentroCostoDto) {
-    return this.ccService.create(dto);
+  async create(
+    @Body() dto: CreateCentroCostoDto,
+    @GetUser() user: UserRequest,
+  ) {
+    // Forzamos los IDs del contexto validado para evitar inyecciones
+    dto.id_empresa = user.id_empresa;
+    dto.id_gestion = user.id_gestion;
+    return await this.ccService.create(dto);
   }
 
-  @Put(':id')
-  update(
+  @Get()
+  async findAll(@GetUser() user: UserRequest) {
+    // Solo listamos lo que pertenece a la empresa y gestión activa en los headers
+    return await this.ccService.findAllByContext(
+      user.id_empresa,
+      user.id_gestion,
+    );
+  }
+
+  @Get(':id')
+  async findOne(
+    @Param('id', ParseIntPipe) id: number,
+    @GetUser() user: UserRequest,
+  ) {
+    return await this.ccService.findOne(id, user.id_empresa);
+  }
+
+  @Patch(':id')
+  async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateCentroCostoDto,
-    @Query('id_empresa', ParseIntPipe) id_empresa: number,
+    @GetUser() user: UserRequest,
   ) {
-    return this.ccService.update(id, dto, id_empresa);
-  }
-
-  @Delete(':id')
-  @HttpCode(HttpStatus.NO_CONTENT)
-  remove(
-    @Param('id', ParseIntPipe) id: number,
-    @Query('id_empresa', ParseIntPipe) id_empresa: number,
-  ) {
-    return this.ccService.remove(id, id_empresa);
+    return await this.ccService.update(id, user.id_empresa, dto);
   }
 }

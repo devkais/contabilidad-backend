@@ -1,22 +1,53 @@
-// src/modules/cuentas/dto/cuenta.dto.ts
+import {
+  IsString,
+  IsNotEmpty,
+  IsNumber,
+  IsBoolean,
+  IsOptional,
+  IsIn,
+} from 'class-validator';
+import { PartialType } from '@nestjs/mapped-types';
 
-// Usamos interfaces o clases para definir la estructura de la respuesta
-export class CuentaDto {
-  id_cuenta: number;
-  codigo: string;
-  nombre: string;
-  nivel: number;
-  clase_cuenta: string;
-  activo: boolean;
-  es_movimiento: boolean;
-
-  // FKs (Se devuelven solo los IDs o los objetos relacionados si se cargan)
-  id_cuenta_padre?: number | null;
+export class CreateCuentaDto {
+  @IsNumber()
+  @IsNotEmpty()
   id_empresa: number;
+
+  @IsNumber()
+  @IsNotEmpty()
   id_gestion: number;
+
+  @IsNumber()
+  @IsNotEmpty()
   id_moneda: number;
 
-  // Si incluyes la relación en el GET, se vería así:
-  // padre?: CuentaDto;
-  // empresa?: any; // Objeto Empresa simplificado
+  @IsString()
+  @IsNotEmpty()
+  codigo: string; // Ej: 1.1.1.01.001
+
+  @IsString()
+  @IsNotEmpty()
+  nombre: string;
+
+  @IsNumber()
+  @IsNotEmpty()
+  nivel: number;
+
+  @IsOptional()
+  @IsNumber()
+  id_cuenta_padre?: number;
+
+  @IsString()
+  @IsNotEmpty()
+  @IsIn(['Activo', 'Pasivo', 'Patrimonio', 'Ingreso', 'Gasto', 'Costo'])
+  clase_cuenta: string;
+
+  @IsBoolean()
+  es_movimiento: boolean; // true = nivel 5 (imputable)
+
+  @IsBoolean()
+  @IsOptional()
+  activo?: boolean;
 }
+
+export class UpdateCuentaDto extends PartialType(CreateCuentaDto) {}

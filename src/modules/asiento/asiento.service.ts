@@ -1,127 +1,103 @@
 import {
   Injectable,
-  NotFoundException,
   BadRequestException,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, DataSource, QueryRunner } from 'typeorm';
 import { Asiento } from './asiento.entity';
-import { CreateAsientoDto } from './dto';
-import { GestionService } from '../gestion/gestion.service';
 import { DetalleAsiento } from '../detalle-asiento/detalle-asiento.entity';
-import { TasaCambioService } from '../tasa-cambio/tasa-cambio.service';
+import { CreateAsientoDto } from './dto/asiento.dto';
+import { MathUtil } from '../../common/utils/math.util';
+import { UserRequest } from '../../auth/interfaces/auth.interface';
 
 @Injectable()
 export class AsientoService {
   constructor(
+    private readonly dataSource: DataSource,
     @InjectRepository(Asiento)
     private readonly asientoRepository: Repository<Asiento>,
-    private readonly tasaCambioService: TasaCambioService,
-    private readonly gestionService: GestionService,
   ) {}
 
-  // Filtrado por Empresa y Gestión (Contexto de Login)
+  async create(dto: CreateAsientoDto, user: UserRequest): Promise<Asiento> {
+    const { detalles, ...cabecera } = dto;
 
-  async getallAsiento(
-    id_empresa: number,
-    id_gestion: number,
-  ): Promise<Asiento[]> {
-    return await this.asientoRepository.find({
-      where: { id_empresa, id_gestion },
-      // AÑADIMOS 'detalles' y 'detalles.cuenta' para ver nombres de cuentas
-      // También puedes añadir 'detalles.centroCosto' si quieres verlo en la tabla
-      relations: ['gestion', 'detalles', 'detalles.cuenta'],
-      order: { fecha: 'DESC' },
-    });
-  }
-
-  // Obtener por ID validando que sea de la empresa del usuario
-
-  async getAsientoById(id: number, id_empresa: number): Promise<Asiento> {
-    const asiento = await this.asientoRepository.findOne({
-      where: { id_asiento: id, id_empresa }, // <--- Candado de seguridad
-
-      relations: ['gestion', 'detalles'],
-    });
-
-    if (!asiento)
-      throw new NotFoundException(
-        `Asiento con ID ${id} no encontrado en esta empresa`,
-      );
-
-    return asiento;
-  }
-
-  async postAsiento(
-    dto: CreateAsientoDto,
-    id_usuario: number,
-  ): Promise<Asiento> {
-    const sumaDebe = dto.detalles.reduce(
-      (acc, det) => acc + Number(det.debe_bs),
-      0,
-    );
-    const sumaHaber = dto.detalles.reduce(
-      (acc, det) => acc + Number(det.haber_bs),
-      0,
-    );
-
-    if (Math.abs(sumaDebe - sumaHaber) > 0.01) {
+    // 1. Validar que existan detalles
+    if (!detalles || detalles.length === 0) {
       throw new BadRequestException(
-        `El asiento no está cuadrado. Diferencia: ${sumaDebe - sumaHaber}`,
+        'El asiento debe tener al menos un detalle',
       );
     }
 
-    const queryRunner =
-      this.asientoRepository.manager.connection.createQueryRunner();
+    // 2. Validar balance de sumas (Debe vs Haber) usando MathUtil
+    const totalDebe = detalles.reduce(
+      (sum, det) => sum + (det.debe_bs || 0),
+      0,
+    );
+    const totalHaber = detalles.reduce(
+      (sum, det) => sum + (det.haber_bs || 0),
+      0,
+    );
+
+    if (!MathUtil.isBalanced(totalDebe, totalHaber)) {
+      throw new BadRequestException(
+        `El asiento no está cuadrado. Debe: ${totalDebe}, Haber: ${totalHaber}. Dif: ${Math.abs(totalDebe - totalHaber)}`,
+      );
+    }
+
+    // 3. Iniciar Transacción Atómica
+    const queryRunner: QueryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
     try {
+      // 4. Crear Cabecera
       const nuevoAsiento = queryRunner.manager.create(Asiento, {
-        ...dto,
-        created_by: id_usuario,
+        ...cabecera,
+        id_empresa: user.id_empresa,
+        id_gestion: user.id_gestion,
+        created_by: user.id_usuario,
+        fecha: new Date(cabecera.fecha),
       });
 
       const asientoGuardado = await queryRunner.manager.save(nuevoAsiento);
 
-      const detalles = dto.detalles.map((det) => ({
-        ...det,
-        id_asiento: asientoGuardado.id_asiento,
-        id_empresa: dto.id_empresa,
-      }));
-      await queryRunner.manager.save(DetalleAsiento, detalles);
+      // 5. Crear Detalles amarrados al ID de la cabecera
+      const detallesEntities = detalles.map((det) => {
+        return queryRunner.manager.create(DetalleAsiento, {
+          ...det,
+          id_asiento: asientoGuardado.id_asiento,
+          id_empresa: user.id_empresa,
+          id_gestion: user.id_gestion,
+        });
+      });
 
+      await queryRunner.manager.save(DetalleAsiento, detallesEntities);
+
+      // 6. Confirmar cambios
       await queryRunner.commitTransaction();
+
+      // Retornar el asiento completo
       return asientoGuardado;
-    } catch (err) {
+    } catch (error: unknown) {
+      // Si algo falla, deshacemos todo
       await queryRunner.rollbackTransaction();
-      // 4. Corregir el error de "Unsafe assignment" usando una validación de tipo
-      const message = err instanceof Error ? err.message : 'Error desconocido';
-      throw new BadRequestException(`Error al guardar el asiento: ${message}`);
+      const mensaje =
+        error instanceof Error ? error.message : 'Error desconocido';
+      throw new InternalServerErrorException(
+        `Error al registrar asiento: ${mensaje}`,
+      );
     } finally {
+      // Liberar el query runner
       await queryRunner.release();
     }
   }
 
-  async putAsiento(
-    id: number,
-
-    dto: CreateAsientoDto,
-
-    id_empresa: number,
-  ): Promise<Asiento> {
-    const asiento = await this.getAsientoById(id, id_empresa);
-
-    this.asientoRepository.merge(asiento, dto);
-
-    return await this.asientoRepository.save(asiento);
-  }
-
-  async deleteAsiento(id: number, id_empresa: number): Promise<void> {
-    const asiento = await this.getAsientoById(id, id_empresa);
-
-    // Nota: El SQL tiene ON DELETE CASCADE o restricción según definimos
-
-    await this.asientoRepository.remove(asiento);
+  async findAll(idEmpresa: number, idGestion: number): Promise<Asiento[]> {
+    return await this.asientoRepository.find({
+      where: { id_empresa: idEmpresa, id_gestion: idGestion },
+      relations: ['detalles', 'detalles.cuenta'],
+      order: { fecha: 'DESC', numero_comprobante: 'DESC' },
+    });
   }
 }

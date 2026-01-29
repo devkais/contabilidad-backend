@@ -3,61 +3,49 @@ import {
   Get,
   Post,
   Body,
-  Put,
   Param,
-  Delete,
   ParseIntPipe,
   UseGuards,
-  HttpCode,
-  HttpStatus,
-  Query, // <-- Fundamental para el contexto de empresa
 } from '@nestjs/common';
 import { CuentaService } from './cuenta.service';
-import { CreateCuentaDto, UpdateCuentaDto } from './dto';
+import { CreateCuentaDto } from './dto/cuenta.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { EmpresaGestionGuard } from '../../auth/guards/empresa-gestion.guard';
+import { GetUser } from '../../common/decorators/get-user.decorator';
+import type { UserRequest } from '../../auth/interfaces/auth.interface';
 
-@UseGuards(JwtAuthGuard)
-@Controller('cuenta')
+@Controller('cuentas')
+@UseGuards(JwtAuthGuard, EmpresaGestionGuard)
 export class CuentaController {
   constructor(private readonly cuentaService: CuentaService) {}
 
+  @Post()
+  async create(@Body() dto: CreateCuentaDto, @GetUser() user: UserRequest) {
+    // Forzamos contexto desde el Guard de seguridad
+    dto.id_empresa = user.id_empresa;
+    dto.id_gestion = user.id_gestion;
+    return await this.cuentaService.create(dto);
+  }
+
   @Get()
-  async findAll(@Query('id_empresa', ParseIntPipe) id_empresa: number) {
-    // Solo trae el plan de cuentas de la empresa seleccionada
-    return await this.cuentaService.findAll(id_empresa);
+  async findAll(@GetUser() user: UserRequest) {
+    // Solo el plan de cuentas de la empresa/gestión actual
+    return await this.cuentaService.findAllByContext(
+      user.id_empresa,
+      user.id_gestion,
+    );
   }
 
   @Get(':id')
   async findOne(
     @Param('id', ParseIntPipe) id: number,
-    @Query('id_empresa', ParseIntPipe) id_empresa: number,
+    @GetUser() user: UserRequest,
   ) {
-    // Valida que la cuenta exista y pertenezca a la empresa
-    return await this.cuentaService.findOne(id, id_empresa);
-  }
-
-  @Post()
-  @HttpCode(HttpStatus.CREATED)
-  async create(@Body() dto: CreateCuentaDto) {
-    // El id_empresa debe venir dentro del JSON del body
-    return await this.cuentaService.create(dto);
-  }
-
-  @Put(':id')
-  async update(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() dto: UpdateCuentaDto, // <--- Debe ser el de cuentas
-    @Query('id_empresa', ParseIntPipe) id_empresa: number,
-  ) {
-    return await this.cuentaService.update(id, dto, id_empresa);
-  }
-
-  @Delete(':id')
-  @HttpCode(HttpStatus.NO_CONTENT)
-  async remove(
-    @Param('id', ParseIntPipe) id: number,
-    @Query('id_empresa', ParseIntPipe) id_empresa: number,
-  ) {
-    return await this.cuentaService.remove(id, id_empresa);
+    // Validamos que la cuenta pertenezca a su empresa
+    const cuenta = await this.cuentaService.findMovimientoOnly(
+      id,
+      user.id_empresa,
+    );
+    return cuenta;
   }
 }

@@ -31,6 +31,9 @@ export class DetalleAsiento {
   @Column({ name: 'id_cuenta_auxiliar', type: 'int', nullable: true })
   id_cuenta_auxiliar: number | null;
 
+  @Column({ name: 'id_gestion', type: 'int', nullable: false })
+  id_gestion: number;
+
   @Column({ length: 255, nullable: true })
   glosa_detalle: string;
 

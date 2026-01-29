@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Bitacora } from './bitacora.entity';
-import { CreateBitacoraDto } from './dto';
+import { UserRequest } from '../../auth/interfaces/auth.interface';
 
 @Injectable()
 export class BitacoraService {
@@ -11,30 +11,41 @@ export class BitacoraService {
     private readonly bitacoraRepository: Repository<Bitacora>,
   ) {}
 
-  // Este método será llamado por otros servicios o interceptores
-  async registrarAccion(
-    dto: CreateBitacoraDto,
-    id_usuario: number,
-  ): Promise<Bitacora> {
-    const registro = this.bitacoraRepository.create({
-      ...dto,
-      id_usuario,
+  /**
+   * Registra una acción en el log del sistema.
+   * Se usa internamente por otros servicios.
+   */
+  async registrar(
+    user: UserRequest,
+    accion: string,
+    modulo: string,
+    tabla: string,
+    idRegistro: number,
+    ip: string,
+    detalles?: Record<string, unknown>,
+  ): Promise<void> {
+    const nuevaEntrada = this.bitacoraRepository.create({
+      id_usuario: user.id_usuario,
+      id_empresa: user.id_empresa,
+      accion,
+      modulo_origen: modulo,
+      tabla_afectada: tabla,
+      id_registro_afectado: idRegistro,
+      ip_maquina: ip,
+      detalle_cambio: detalles ? JSON.stringify(detalles) : null,
     });
-    return await this.bitacoraRepository.save(registro);
+
+    await this.bitacoraRepository.save(nuevaEntrada);
   }
 
-  async findAll(): Promise<Bitacora[]> {
+  /**
+   * Consulta logs filtrados por empresa (solo para administradores/auditores)
+   */
+  async findAllByEmpresa(idEmpresa: number): Promise<Bitacora[]> {
     return await this.bitacoraRepository.find({
-      relations: ['usuario', 'empresa'],
+      where: { id_empresa: idEmpresa },
       order: { fecha_hora: 'DESC' },
-    });
-  }
-
-  async findByEmpresa(id_empresa: number): Promise<Bitacora[]> {
-    return await this.bitacoraRepository.find({
-      where: { id_empresa },
-      relations: ['usuario'],
-      order: { fecha_hora: 'DESC' },
+      relations: ['usuario'], // Para saber quién hizo qué
     });
   }
 }

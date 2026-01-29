@@ -3,67 +3,41 @@ import {
   Get,
   Post,
   Body,
-  Put,
   Param,
-  Delete,
   ParseIntPipe,
   UseGuards,
-  HttpCode,
-  HttpStatus,
-  Query, // <-- Capturamos la empresa actual
 } from '@nestjs/common';
 import { GestionService } from './gestion.service';
-import { CreateGestionDto, UpdateGestionDto } from './dto';
+import { CreateGestionDto } from './dto/gestion.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { EmpresaGestionGuard } from '../../auth/guards/empresa-gestion.guard';
+import { GetUser } from '../../common/decorators/get-user.decorator';
+import type { UserRequest } from '../../auth/interfaces/auth.interface';
 
-@UseGuards(JwtAuthGuard)
-@Controller('gestion')
+@Controller('gestiones')
+@UseGuards(JwtAuthGuard) // Primero autenticamos quién es
 export class GestionController {
   constructor(private readonly gestionService: GestionService) {}
 
-  @Get()
-  async findAll(@Query('id_empresa') id_empresa?: number) {
-    // Si se envía id_empresa, filtramos, si no, devolvemos según lógica del service
-    return await this.gestionService.findAll(
-      id_empresa ? Number(id_empresa) : undefined,
-    );
+  @Post()
+  async create(@Body() createGestionDto: CreateGestionDto) {
+    // Generalmente solo un admin crea gestiones
+    return await this.gestionService.create(createGestionDto);
   }
 
-  @Get('empresa/:id_empresa')
-  async findByEmpresa(@Param('id_empresa', ParseIntPipe) id_empresa: number) {
-    return await this.gestionService.findByEmpresa(id_empresa);
+  @Get('empresa')
+  @UseGuards(EmpresaGestionGuard) // Validamos que el usuario tenga acceso a la empresa solicitada
+  async findAll(@GetUser() user: UserRequest) {
+    // Extraemos id_empresa del contexto validado por el Guard
+    return await this.gestionService.findAllByEmpresa(user.id_empresa);
   }
 
   @Get(':id')
+  @UseGuards(EmpresaGestionGuard)
   async findOne(
     @Param('id', ParseIntPipe) id: number,
-    @Query('id_empresa', ParseIntPipe) id_empresa: number, // <-- Contexto de empresa
+    @GetUser() user: UserRequest,
   ) {
-    return await this.gestionService.findOne(id, id_empresa);
-  }
-
-  @Post()
-  @HttpCode(HttpStatus.CREATED)
-  async create(@Body() dto: CreateGestionDto) {
-    // El id_empresa ya viene en el DTO de creación
-    return await this.gestionService.create(dto);
-  }
-
-  @Put(':id')
-  async update(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() dto: UpdateGestionDto,
-    @Query('id_empresa', ParseIntPipe) id_empresa: number, // <-- Seguridad
-  ) {
-    return await this.gestionService.update(id, dto, id_empresa);
-  }
-
-  @Delete(':id')
-  @HttpCode(HttpStatus.NO_CONTENT)
-  async remove(
-    @Param('id', ParseIntPipe) id: number,
-    @Query('id_empresa', ParseIntPipe) id_empresa: number, // <-- Seguridad
-  ) {
-    return await this.gestionService.remove(id, id_empresa);
+    return await this.gestionService.findOne(id, user.id_empresa);
   }
 }

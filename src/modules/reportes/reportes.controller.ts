@@ -1,4 +1,4 @@
-import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+/*import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { ReportesService } from './reportes.service';
 import { ConsultarResultadosDto } from './dto/consultar-resultados.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
@@ -44,3 +44,4 @@ export class ReportesController {
     );
   }
 }
+*/

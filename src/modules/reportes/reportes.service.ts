@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+/*import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Like } from 'typeorm';
 import { Cuenta } from '../cuenta/cuenta.entity';
@@ -66,10 +66,10 @@ export class ReportesService {
         );
         return c?.codigo.startsWith('4');
       })
-      .reduce((acc, s) => acc + (parseFloat(s.saldo) * -1), 0); // Invertimos signo para ingresos
+      .reduce((acc, s) => acc + parseFloat(s.saldo) * -1, 0); // Invertimos signo para ingresos
 
     const egresosTotal = saldosRaw
-      .filter(s => {
+      .filter((s) => {
         const c = cuentas.find(
           (cta) => cta.id_cuenta === parseInt(s.id_cuenta),
         );
@@ -81,10 +81,15 @@ export class ReportesService {
 
     const estructurarCuentas = (idPadre: number | null = null): any[] => {
       return cuentas
-        .filter((c) => c.id_padre === idPadre && ['1','2','3'].includes(c.codigo[0]))
+        .filter(
+          (c) =>
+            c.id_cuenta_padre === idPadre &&
+            ['1', '2', '3'].includes(c.codigo[0]),
+        )
         .map((cuenta) => {
-          let hijos = estructurarCuentas(cuenta.id_cuenta);
-          let saldoAcumulado = hijos.length > 0
+          const hijos = estructurarCuentas(cuenta.id_cuenta);
+          let saldoAcumulado =
+            hijos.length > 0
               ? hijos.reduce((acc, h) => acc + h.saldo, 0)
               : saldosMap.get(cuenta.id_cuenta) || 0;
 
@@ -170,10 +175,11 @@ export class ReportesService {
 
     const estructurar = (idPadre: number | null = null): any[] => {
       return cuentas
-        .filter((c) => c.id_padre === idPadre)
+        .filter((c) => c.id_cuenta_padre === idPadre)
         .map((cuenta) => {
           const hijos = estructurar(cuenta.id_cuenta);
-          const saldoTotal = hijos.length > 0
+          const saldoTotal =
+            hijos.length > 0
               ? hijos.reduce((acc, h) => acc + h.saldo, 0)
               : saldosMap.get(cuenta.id_cuenta) || 0;
 
@@ -204,8 +210,12 @@ export class ReportesService {
     }
 
     const reporte = estructurar(null);
-    const ingresos = reporte.filter(c => c.codigo.startsWith('4')).reduce((a, b) => a + b.saldo, 0);
-    const egresos = reporte.filter(c => c.codigo.startsWith('5')).reduce((a, b) => a + b.saldo, 0);
+    const ingresos = reporte
+      .filter((c) => c.codigo.startsWith('4'))
+      .reduce((a, b) => a + b.saldo, 0);
+    const egresos = reporte
+      .filter((c) => c.codigo.startsWith('5'))
+      .reduce((a, b) => a + b.saldo, 0);
 
     return {
       reporte,
@@ -269,3 +279,4 @@ export class ReportesService {
     };
   }
 }
+*/

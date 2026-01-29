@@ -2,8 +2,8 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Usuario } from './usuario.entity';
-import { UsuarioController } from './controllers/usuario.controller';
-import { UsuarioService } from './services/usuario.service';
+import { UsuarioController } from './usuario.controller';
+import { UsuarioService } from './usuario.service';
 // Importa las otras entidades si son necesarias para forFeature
 // import { Rol } from './entities/rol.entity';
 
