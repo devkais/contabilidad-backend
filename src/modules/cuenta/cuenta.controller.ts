@@ -6,6 +6,8 @@ import {
   Param,
   ParseIntPipe,
   UseGuards,
+  Put,
+  Delete,
 } from '@nestjs/common';
 import { CuentaService } from './cuenta.service';
 import { CreateCuentaDto } from './dto/cuenta.dto';
@@ -46,5 +48,22 @@ export class CuentaController {
       user.id_empresa,
     );
     return cuenta;
+  }
+
+  @Put(':id')
+  async update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: Partial<CreateCuentaDto>,
+    @GetUser() user: UserRequest,
+  ) {
+    return await this.cuentaService.update(id, user.id_empresa, dto);
+  }
+
+  @Delete(':id')
+  async remove(
+    @Param('id', ParseIntPipe) id: number,
+    @GetUser() user: UserRequest,
+  ) {
+    return await this.cuentaService.remove(id, user.id_empresa);
   }
 }

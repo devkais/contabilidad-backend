@@ -6,7 +6,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Cuenta } from './cuenta.entity';
-import { CreateCuentaDto } from './dto/cuenta.dto';
+import { CreateCuentaDto, UpdateCuentaDto } from './dto/cuenta.dto';
 
 @Injectable()
 export class CuentaService {
@@ -80,5 +80,47 @@ export class CuentaService {
       );
     }
     return cuenta;
+  }
+
+  async update(
+    id: number,
+    id_empresa: number,
+    dto: Partial<UpdateCuentaDto>,
+  ): Promise<Cuenta> {
+    const cuenta = await this.cuentaRepository.findOne({
+      where: { id_cuenta: id, id_empresa },
+    });
+
+    if (!cuenta) throw new BadRequestException('Cuenta no encontrada.');
+
+    // Solo permitimos actualizar ciertos campos para no romper la integridad
+    // No permitimos cambiar id_empresa, id_gestion ni el código (si ya tiene movimientos)
+    const updatedCuenta = this.cuentaRepository.merge(cuenta, {
+      nombre: dto.nombre,
+      id_moneda: dto.id_moneda,
+      activo: dto.activo,
+    });
+
+    return await this.cuentaRepository.save(updatedCuenta);
+  }
+
+  async remove(id: number, id_empresa: number): Promise<void> {
+    const cuenta = await this.cuentaRepository.findOne({
+      where: { id_cuenta: id, id_empresa },
+      relations: ['subcuentas'], // Importante para validar hijos
+    });
+
+    if (!cuenta) throw new BadRequestException('La cuenta no existe.');
+
+    // REGLA DE ORO: No borrar si tiene hijos
+    if (cuenta.subcuentas && cuenta.subcuentas.length > 0) {
+      throw new BadRequestException(
+        'No se puede eliminar una cuenta que tiene subcuentas vinculadas.',
+      );
+    }
+
+    // TODO: En el futuro, validar si tiene asientos contables antes de borrar
+
+    await this.cuentaRepository.remove(cuenta);
   }
 }
