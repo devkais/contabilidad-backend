@@ -5,6 +5,7 @@ import {
   Body,
   Patch,
   Param,
+  Delete,
   ParseIntPipe,
   UseGuards,
 } from '@nestjs/common';
@@ -58,5 +59,12 @@ export class CentroCostoController {
     @GetUser() user: UserRequest,
   ) {
     return await this.ccService.update(id, user.id_empresa, dto);
+  }
+  @Delete(':id')
+  async delete(
+    @Param('id', ParseIntPipe) id: number,
+    @GetUser() user: UserRequest,
+  ) {
+    return await this.ccService.delete(id, user.id_empresa);
   }
 }
