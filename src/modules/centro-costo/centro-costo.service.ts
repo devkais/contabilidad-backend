@@ -68,4 +68,9 @@ export class CentroCostoService {
     const actualizado = Object.assign(cc, dto);
     return await this.centroCostoRepository.save(actualizado);
   }
+
+  async delete(id: number, idEmpresa: number): Promise<void> {
+    const cc = await this.findOne(id, idEmpresa);
+    await this.centroCostoRepository.remove(cc);
+  }
 }
