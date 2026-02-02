@@ -52,7 +52,7 @@ export class CuentaAuxiliarService {
   ): Promise<CuentaAuxiliar[]> {
     return await this.auxiliarRepository.find({
       where: { id_empresa: idEmpresa, id_gestion: idGestion },
-      relations: ['id_padre'], // Cargamos la relación recursiva
+      relations: ['padre'], // Cargamos la relación recursiva
       order: { codigo: 'ASC' },
     });
   }
