@@ -50,6 +50,9 @@ importers:
       class-validator:
         specifier: ^0.14.3
         version: 0.14.3
+      csv-parser:
+        specifier: ^3.2.0
+        version: 3.2.0
       jsonwebtoken:
         specifier: ^9.0.3
         version: 9.0.3
@@ -1815,6 +1818,11 @@ packages:
 
   css-line-break@2.1.0:
     resolution: {integrity: sha512-FHcKFCZcAha3LwfVBhCQbW2nCNbkZXn7KVUJcsT5/P8YmfsVja0FMPJr0B903j/E69HUphKiV9iQArX8SDYA4w==}
+
+  csv-parser@3.2.0:
+    resolution: {integrity: sha512-fgKbp+AJbn1h2dcAHKIdKNSSjfp43BZZykXsCjzALjKy80VXQNHPFJ6T9Afwdzoj24aMkq8GwDS7KGcDPpejrA==}
+    engines: {node: '>= 10'}
+    hasBin: true
 
   dayjs@1.11.19:
     resolution: {integrity: sha512-t5EcLVS6QPBNqM2z8fakk/NKel+Xzshgt8FFKAn+qwlD1pzZWxh0nVCrvFK7ZDb6XucZeF9z8C7CBWTRIVApAw==}
@@ -5502,6 +5510,8 @@ snapshots:
     dependencies:
       utrie: 1.0.2
     optional: true
+
+  csv-parser@3.2.0: {}
 
   dayjs@1.11.19: {}
 
