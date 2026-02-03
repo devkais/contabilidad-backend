@@ -1,5 +1,5 @@
 // src/modules/tasa-cambio/tasa-cambio.service.ts
-import { Injectable, NotFoundException } from '@nestjs/common';
+/*import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { TasaCambio } from './tasa-cambio.entity';
@@ -39,3 +39,4 @@ export class TasaCambioService {
     );
   }
 }
+*/
