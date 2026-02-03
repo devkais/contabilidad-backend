@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards, Get, Param } from '@nestjs/common';
+/*import { Controller, Post, Body, UseGuards, Get, Param } from '@nestjs/common';
 import { TasaCambioService } from './tasa-cambio.service';
 import { BulkCreateTasaCambioDto } from './dto/create-tasa-cambio.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
@@ -18,3 +18,4 @@ export class TasaCambioController {
     return this.tasaCambioService.getTasaByFecha(fecha);
   }
 }
+*/
