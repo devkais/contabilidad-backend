@@ -3,12 +3,14 @@ import {
   Get,
   Post,
   Body,
+  Patch,
+  Delete,
   Param,
   ParseIntPipe,
   UseGuards,
 } from '@nestjs/common';
 import { GestionService } from './gestion.service';
-import { CreateGestionDto } from './dto/gestion.dto';
+import { CreateGestionDto, UpdateGestionDto } from './dto/gestion.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { EmpresaGestionGuard } from '../../auth/guards/empresa-gestion.guard';
 import { GetUser } from '../../common/decorators/get-user.decorator';
@@ -39,5 +41,29 @@ export class GestionController {
     @GetUser() user: UserRequest,
   ) {
     return await this.gestionService.findOne(id, user.id_empresa);
+  }
+
+  @Patch(':id')
+  @UseGuards(EmpresaGestionGuard)
+  async update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateGestionDto: UpdateGestionDto,
+    @GetUser() user: UserRequest,
+  ) {
+    return await this.gestionService.update(
+      id,
+      user.id_empresa,
+      updateGestionDto,
+    );
+  }
+
+  @Delete(':id')
+  @UseGuards(EmpresaGestionGuard)
+  async remove(
+    @Param('id', ParseIntPipe) id: number,
+    @GetUser() user: UserRequest,
+  ) {
+    await this.gestionService.delete(id, user.id_empresa);
+    return { message: 'Gestión eliminada correctamente' };
   }
 }
