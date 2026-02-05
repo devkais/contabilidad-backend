@@ -6,7 +6,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Gestion } from './gestion.entity';
-import { CreateGestionDto } from './dto/gestion.dto';
+import { CreateGestionDto, UpdateGestionDto } from './dto/gestion.dto';
 
 @Injectable()
 export class GestionService {
@@ -59,5 +59,43 @@ export class GestionService {
       where: { id_gestion: id },
     });
     return gestion?.estado === 'abierto';
+  }
+
+  async update(
+    id: number,
+    idEmpresa: number,
+    updateGestionDto: UpdateGestionDto,
+  ): Promise<Gestion> {
+    // Buscamos la gestión asegurando que pertenezca a la empresa
+    const gestion = await this.findOne(id, idEmpresa);
+
+    // Si se intentan cambiar fechas, validamos la lógica contable
+    if (updateGestionDto.fecha_inicio || updateGestionDto.fecha_fin) {
+      const nuevaInicio = new Date(
+        updateGestionDto.fecha_inicio || gestion.fecha_inicio,
+      );
+      const nuevaFin = new Date(
+        updateGestionDto.fecha_fin || gestion.fecha_fin,
+      );
+
+      if (nuevaFin <= nuevaInicio) {
+        throw new BadRequestException(
+          'La fecha de fin debe ser posterior a la de inicio',
+        );
+      }
+    }
+
+    // Fusionamos los cambios y guardamos
+    const gestionActualizada = this.gestionRepository.merge(
+      gestion,
+      updateGestionDto,
+    );
+    return await this.gestionRepository.save(gestionActualizada);
+  }
+
+  async delete(id: number, idEmpresa: number): Promise<void> {
+    const gestion = await this.findOne(id, idEmpresa);
+
+    await this.gestionRepository.remove(gestion);
   }
 }
