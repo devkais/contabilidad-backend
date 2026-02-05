@@ -21,10 +21,6 @@ export class CreateAsientoDto {
   @IsNotEmpty()
   id_gestion: number;
 
-  @IsNumber()
-  @IsNotEmpty()
-  created_by: number;
-
   @IsDateString()
   @IsNotEmpty()
   fecha: string;

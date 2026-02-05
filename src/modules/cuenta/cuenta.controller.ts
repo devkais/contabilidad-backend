@@ -66,4 +66,17 @@ export class CuentaController {
   ) {
     return await this.cuentaService.remove(id, user.id_empresa);
   }
+
+  @Post('clonar/:idGestionOrigen')
+  async clonar(
+    @Param('idGestionOrigen', ParseIntPipe) idOrigen: number,
+    @GetUser() user: UserRequest,
+  ) {
+    // El id_gestion de destino se saca del token/contexto actual del usuario
+    return await this.cuentaService.clonarPlan(
+      user.id_empresa,
+      idOrigen,
+      user.id_gestion,
+    );
+  }
 }

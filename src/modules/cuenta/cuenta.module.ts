@@ -6,9 +6,10 @@ import { CuentaService } from './cuenta.service';
 import { EmpresaModule } from '../empresa/empresa.module';
 import { MonedaModule } from '../moneda/moneda.module';
 import { UsuarioEmpresaGestionModule } from '../usuario-empresa-gestion/usuario-empresa-gestion.module';
+import { DetalleAsiento } from '../detalle-asiento/detalle-asiento.entity';
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Cuenta]),
+    TypeOrmModule.forFeature([Cuenta, DetalleAsiento]),
     EmpresaModule,
     MonedaModule,
     UsuarioEmpresaGestionModule,
