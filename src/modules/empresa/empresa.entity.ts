@@ -22,6 +22,9 @@ export class Empresa {
   @Column({ length: 50, nullable: true })
   telefono: string;
 
+  @Column({ type: 'boolean', default: true })
+  activo: boolean;
+
   // --- RELACIONES ESTRUCTURALES ---
 
   @OneToMany(() => Gestion, (gestion) => gestion.empresa)
